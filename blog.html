@@ -1,150 +1,290 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>博客文章</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>mz.blog</title>
+	<style type="text/css">
+		* { margin: 0; padding: 0; box-sizing: border-box;}
+        a{text-decoration: none;color:#0366d6;}
+        .hide{display:none !important}.show{display:block !important;}
+		body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        html::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+        #toc::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+		nav { position: fixed; top: 0; left: 0; right: 0; height: 3rem; color: #222; background: #fdfdfd; display: flex; align-items: center; gap: 2rem; padding: 0 1rem; z-index: 1000; border-bottom: 1px solid #e0e0e0; }
+		nav a {color: #0366d6; display: flex; align-items: center; }
+		.label { margin-left: 0.3rem; font-size: 0.9rem; }
+		main { margin-top: 3rem; min-height: calc(100vh - 3rem); overflow-y: auto;padding:1rem; background: #f9f9f9; display: flex;justify-content: space-around; }
+		.aside {position: fixed;top:4rem;bottom:1rem;width:calc(50vw - 32rem );min-width:18rem;min-height:10rem;background:#fff;padding:1rem;border-radius: 0.5rem}
+        #toc{left:1rem;overflow-y:auto;}#right{right:1rem}
+        #toc a{display:inline-block;width:100%}
+        #toc li{list-style:no;padding:0.25rem;}
+        #toc li:hover{color: #1a5fd0;background:#e8f0fe;padding:0.5rem 0.25rem;}
+        #toc li::marker{content:none}
+        /*#toc ul,#toc li{list-style:none;padding-left: 1rem;position: relative;}
+        #toc ul::before{content: '';position:absolute;top:0;left:0.5rem;bottom:0;width:1px;background:#ccc}
+		#toc ul>li{position:relative;padding-left:1rem;margin:0.5rem 0;cursor:pointer;}
+        #toc ul>li::before{content:'';position:absolute;top:0.5rem;left:0;width:0.5rem;height:1px;background:#ccc}
+        #toc li:hover{background:#f9f9f9;}*/
+        .main {width:960px;padding:1rem;border-radius: 0.5rem}
+		.mermaid { text-align: center; margin: 1rem 0; }
+		.preview pre { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+		.preview pre code { background: none; padding: 0; }
+		.katex { font-size: 1.1em; }
+		.katex-display { margin: 1rem 0; text-align: center;}
+		.mermaid svg { max-width: 100%; height: auto; }
+        #toctoggle{position:fixed;bottom:5rem;left:50%;transform:translate(-50%);font-size:2rem;display:block;border-radius:1.5rem;border:1px solid #e0e0e0;background:#d0d7de;opacity:0.9;width:3rem;height:3rem;text-align:center;text-decoration:none;}
+        #toctoggle:hover{opacity:1;}
 
-  <!-- CSS 样式 -->
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    nav {
-      position: fixed;
-      top: 0;
-      height: 60px;
-      width: 100%;
-      background: #333;
-      color: #fff;
-      line-height: 60px;
-      text-align: center;
-      z-index: 10;
-    }
-    main {
-      display: flex;
-      flex-wrap: wrap;
-      height: calc(100vh - 60px);
-      margin-top: 60px;
-      overflow: hidden;
-      word-break: break-word;
-    }
-    #toc, #archive {
-      width: 20%;
-      padding: 1em;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
-    #content {
-      flex: 1;
-      padding: 1em;
-      overflow-y: auto;
-      box-sizing: border-box;
-    }
-    @media screen and (max-width: 1024px) {
-      #archive {
-        width: 100%;
-        order: 2;
-      }
-    }
-    @media screen and (max-width: 768px) {
-      #toc {
-        display: none;
-      }
-      #archive {
-        width: 100%;
-      }
-    }
-  </style>
-
-  <!-- 高亮样式 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+        @media (max-width: 1600px) {
+            #toc{display:none}
+            main{justify-content:flex-start;}
+            #right{width:calc(100vw - 63rem )}
+        }
+        @media (max-width: 1300px) {
+            #toc{display:none}
+            #right{position:static;max-width:960px;margin-top:1rem;width:960px}
+            main{justify-content:space-around;flex-wrap: wrap;}
+        }
+		@media (max-width: 600px) {
+            nav a{font-size:1.5rem}
+			nav { justify-content: space-around; }
+			nav .label { display: none; }
+            main{justify-content:space-around;flex-wrap: wrap;}
+            #toc{display:none;}
+            .main,aside{width:calc(100vw - 2rem )}
+		}
+	</style>
+	<!-- CSS 库 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css">
 </head>
 <body>
-  <nav>导航栏</nav>
-  <main>
-    <aside id="toc">目录区域</aside>
-    <section id="content">文章加载中...</section>
-    <aside id="archive">归档区域</aside>
-  </main>
+	<nav>
+        <a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
+        <a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
+        <a href="archive.html"><span class="icon">📚</span><span class="label">工具</span></a>
+        <a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
+	</nav>
+    <a href="javascript:;"id="toctoggle"class="toctoggle hide">≡</a>
+	<main>
+		<aside class="aside"id="toc"></aside>
+		<div class="main preview markdown-body" id="preview"></div>
+		<aside class="aside"id="right"></aside>
+	</main>
+	<!-- JavaScript 库 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.1/marked.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.3.1/mermaid.min.js"></script>
+	<script type="text/javascript">
+    const toc = document.getElementById('toc');
+    const menuBtn = document.getElementById('toctoggle');
+    // 菜单按钮点击逻辑：显示或隐藏目录
+    menuBtn.addEventListener('click', function(event) {
+        toc.classList.add("show")
+        menuBtn.classList.add("hide")
+        event.stopPropagation()
+        //toc.style.display = toc.style.display === 'none' || toc.style.display === '' ? 'block' : 'none';
+    });
 
-  <!-- JS 库 -->
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it@13.0.1/dist/markdown-it.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it-katex@4.0.0/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it-highlightjs@3.3.0/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it-mermaid@2.0.0/dist/markdown-it-mermaid.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    // 监听点击事件
+    document.addEventListener('click', function(event) {
+        // 检查点击的元素是否是#toc内的链接
+        const width = window.innerWidth;
+        if(width<1300){
+            const isTocLink = event.target.closest('#toc a');
 
-  <!-- JS 主逻辑 -->
-  <script>
-    const md = markdownit({
-      html: true,
-      linkify: true,
-      typographer: true
-    })
-    .use(markdownitKatex)
-    .use(markdownitHighlightjs)
-    .use(markdownitMermaid);
+            // 如果点击的不是#toc内的链接，隐藏#toc
+            if (!isTocLink && !event.target.closest('#toctoggle')) {
+                toc.classList.remove("show")
+            } else if (isTocLink) {
+                // 如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
+                const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => {
+                        window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize)); // 3rem向上滚动
+                    }, 50);
+                }
+                toc.classList.remove("show")
+            }
+            menuBtn.classList.remove("hide")
+            event.stopPropagation()
+        }
+        
+        
+    });
+        // if (!isTocLink) {
+        //     // 如果点击的不是#toc内的链接，隐藏#toc
+        //     toc.classList.add("hide")
+        // } else {
+        //     // 如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
+        //     const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
+        //     const targetElement = document.getElementById(targetId);
+        //     if (targetElement) {
+        //         targetElement.scrollIntoView({ behavior: 'smooth' });
+        //     }
+        //     toc.classList.add("hide")
+        // }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const mdName = urlParams.get("md");
+        class MarkdownRenderer {
+            constructor() {
+                this.preview = document.getElementById('preview');
+                this.tocElement = document.getElementById('toc');
+                this.mermaidCounter = 0;
+                this.loadMarkdownFromURL();
+            }
 
-    // 渲染 Markdown 内容
-    fetch(`p/${mdName}.md`)
-      .then(res => res.text())
-      .then(text => {
-        document.getElementById("content").innerHTML = md.render(text);
-        hljs.highlightAll();
-        generateTOC("content", "toc");
-      });
+            // 初始化 marked 和 mermaid 配置
+            initializeLibraries() {
+                marked.setOptions({
+                    highlight: function (code, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                return hljs.highlight(code, { language: lang }).value;
+                            } catch (err) {
+                                console.warn('语法高亮错误:', err);
+                            }
+                        }
+                        return hljs.highlightAuto(code).value;
+                    },
+                    breaks: true,
+                    gfm: true,
+                    headerIds: true,
+                    headerPrefix: 'section-'
+                });
 
-    // 生成目录
-    function generateTOC(containerId, tocContainerId) {
-      const container = document.getElementById(containerId);
-      const toc = document.getElementById(tocContainerId);
-      const headers = container.querySelectorAll("h1, h2, h3");
+                mermaid.initialize({
+                    startOnLoad: false,
+                    theme: 'default',
+                    themeVariables: {
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        fontSize: '14px'
+                    },
+                    flowchart: { useMaxWidth: true, htmlLabels: true },
+                    sequence: { useMaxWidth: true, actorMargin: 50 }
+                });
+            }
 
-      toc.innerHTML = "<h2>目录</h2><ul>";
-      headers.forEach((header, i) => {
-        const id = "heading-" + i;
-        header.id = id;
-        const text = header.innerText;
-        const tag = header.tagName.toLowerCase();
-        toc.innerHTML += `<li class="${tag}"><a href="#${id}">${text}</a></li>`;
-      });
-      toc.innerHTML += "</ul>";
-    }
+            // 从 URL 获取 Markdown 文件
+            async loadMarkdownFromURL() {
+                const params = new URLSearchParams(window.location.search);
+                const mdFileName = params.get('p') || 'readme.md';
 
-    // 加载归档列表
-    function groupByYearMonth(data) {
-      const grouped = {};
-      data.forEach(([name, datetime]) => {
-        const [date] = datetime.split(" ");
-        const [year, month] = date.split("-");
-        const key = `${year}-${month}`;
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(name);
-      });
-      return grouped;
-    }
+                try {
+                    const response = await fetch(mdFileName);
+                    if (!response.ok) throw new Error('无法加载文件');
+                    const markdownText = await response.text();
+                    this.render(markdownText);
+                } catch (error) {
+                    console.error('错误:', error);
+                    this.showError('加载错误', `无法加载文件 ${mdFileName}`);
+                }
+            }
 
-    fetch("list.json")
-      .then(res => res.json())
-      .then(data => {
-        const grouped = groupByYearMonth(data);
-        const archive = document.getElementById("archive");
-        archive.innerHTML = "<h2>归档</h2>";
-        Object.entries(grouped).forEach(([ym, files]) => {
-          archive.innerHTML += `<h3>${ym}</h3><ul>`;
-          files.forEach(f => {
-            archive.innerHTML += `<li><a href="blog.html?md=${f}">文章 ${f}</a></li>`;
-          });
-          archive.innerHTML += "</ul>";
-        });
-      });
-  </script>
+            // 渲染 Markdown 和 TOC
+            async render(markdown) {
+                if (!markdown.trim()) {
+                    this.preview.innerHTML = '<div class="loading">请输入 Markdown 文本...</div>';
+                    return;
+                }
+
+                const toc = this.generateTOC(markdown);
+                this.tocElement.innerHTML = toc;
+
+                // 预处理 Mermaid 代码块
+                const processedMarkdown = this.preprocessMermaid(markdown);
+
+                // 渲染 Markdown 内容
+                let html = marked.parse(processedMarkdown);
+                html = await this.renderMath(html);
+                this.preview.innerHTML = html;
+
+                // 渲染 Mermaid 图表
+                await this.renderMermaid();
+            }
+
+            // 生成目录
+            generateTOC(markdown) {
+                const headings = markdown.match(/^(#{1,6})\s(.+)$/gm);
+                if (!headings) return '<ul><li>没有发现标题</li></ul>';
+
+                return headings.reduce((toc, heading) => {
+                    const level = heading.match(/^#{1,6}/)[0].length;
+                    const text = heading.replace(/^#{1,6}\s/, '');
+                    const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+                    return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
+                }, '<ul>') + '</ul>';
+            }
+
+            // 预处理 Mermaid 代码块
+            preprocessMermaid(markdown) {
+                this.mermaidCounter = 0;
+                return markdown.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, code) => {
+                    const id = `mermaid-${this.mermaidCounter++}`;
+                    return `<div class="mermaid" id="${id}">${code.trim()}</div>`;
+                });
+            }
+
+            // 渲染 Mermaid 图表
+            async renderMermaid() {
+                const mermaidElements = this.preview.querySelectorAll('.mermaid');
+                for (const element of mermaidElements) {
+                    try {
+                        const graphDefinition = element.textContent.trim();
+                        const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
+                        element.innerHTML = svg;
+                    } catch (error) {
+                        console.error('Mermaid 渲染错误:', error);
+                        element.innerHTML = `<div class="error-message">
+                            <strong>Mermaid 图表渲染错误:</strong>
+                            ${error.message}
+                        </div>`;
+                    }
+                }
+            }
+
+            // 渲染 LaTeX 数学公式
+            async renderMath(html) {
+                try {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+
+                    renderMathInElement(tempDiv, {
+                        delimiters: [
+                            { left: '$$', right: '$$', display: true },
+                            { left: '$', right: '$', display: false },
+                            { left: '\\(', right: '\\)', display: false },
+                            { left: '\\[', right: '\\]', display: true }
+                        ],
+                        throwOnError: false,
+                        errorColor: '#cc0000',
+                        strict: 'ignore'
+                    });
+
+                    return tempDiv.innerHTML;
+                } catch (error) {
+                    console.error('LaTeX 渲染错误:', error);
+                    return html;
+                }
+            }
+
+            // 显示错误信息
+            showError(title, message) {
+                this.preview.innerHTML = `
+                    <div class="error-message">
+                        <strong>${title}</strong>
+                        ${message}
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new MarkdownRenderer());
+	</script>
 </body>
 </html>
