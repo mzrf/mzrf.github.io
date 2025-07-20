@@ -15,6 +15,7 @@
 		h1,p{text-align:center;margin-top:10rem}
 		p{text-align:center;margin:2rem 0 10rem 0}
 		section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem;max-width:960px;margin:0 auto}
+		li{display:flex;gap:1rem}
 		@media (max-width: 600px){
 			nav a{font-size:1.5rem}
 			nav {justify-content:space-around;}
@@ -45,7 +46,7 @@
         const latest = list.slice(-3).reverse();
         const container = document.getElementById('latest');
         container.innerHTML = latest.map(
-          ([name]) => `<li><a href="blog.html?p=${name}">${name}</a></li>`
+          ([name],[date]) => `<li><a href="blog.html?p=${name}">${name}</a><span>${date}</span></li>`
         ).join('');
       });
 </script>
