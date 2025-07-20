@@ -15,7 +15,9 @@
 		h1,p{text-align:center;margin-top:10rem}
 		p{text-align:center;margin:2rem 0 10rem 0}
 		section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem;max-width:960px;margin:0 auto}
-		li{display:flex;gap:1rem}
+		li{display:flex;gap:1rem;padding:0.5rem}
+		li i{color:#777}
+		li:hover{background:#e8f0fe}
 		@media (max-width: 600px){
 			nav a{font-size:1.5rem}
 			nav {justify-content:space-around;}
@@ -27,7 +29,7 @@
 	<nav>
 		<a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
 		<a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
-		<a href="archive.html"><span class="icon">📚</span><span class="label">工具</span></a>
+		<a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
 		<a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
 	</nav>
 	<main>
@@ -45,9 +47,9 @@
       .then(list => {
         const latest = list.slice(-3).reverse();
         const container = document.getElementById('latest');
-        container.innerHTML = latest.map(
-          ([name],[date]) => `<li><a href="blog.html?p=${name}">${name}</a><span>${date}</span></li>`
-        ).join('');
+        container.innerHTML = latest.map(([name, date]) => 
+  		`<li><a href="blog.html?p=${encodeURIComponent(name)}">${name}</a><i>${date}</i></li>`
+	).join('');
       });
 </script>
 </html>
