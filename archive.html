@@ -54,7 +54,7 @@
 		<a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
 	</nav>
 	<main class="main">
-<ul class="tree active"id="tree"></ul>
+		<ul class="tree"id="tree"></ul>
 	</main>
 </body>
 <script>
@@ -67,7 +67,7 @@
 
       // 生成 2025 文件夹节点
       const yearNode = document.createElement('li');
-      yearNode.classList.add('folder', 'toggle');
+      yearNode.classList.add('folder', 'toggle','active');
       yearNode.innerHTML = `📁 2025`;
 
       const nestedList = document.createElement('ul');
