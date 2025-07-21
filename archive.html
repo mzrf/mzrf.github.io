@@ -78,7 +78,10 @@ section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px so
       listData.forEach(file => {
         const fileNode = document.createElement('li');
 	const date = new Date(file[1]);
-        const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`;
+	const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
+        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
+        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
+        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`;
         fileNode.innerHTML = `<span class="file"><a href="blog.html?p=p/${file[0]}">${file[0]}</a></span> <i class="comment">${formattedDate}</i>`;
         nestedList.appendChild(fileNode);
       });
