@@ -174,7 +174,7 @@
             // 从 URL 获取 Markdown 文件
             async loadMarkdownFromURL() {
                 const params = new URLSearchParams(window.location.search);
-                const mdFileName = params.get('p') || 'readme.md';
+                const mdFileName = params.get('p') || 'p/readme.md';
 
                 try {
                     const response = await fetch(mdFileName);
