@@ -141,6 +141,10 @@
         const fileName = blog[0]; // 文件名
         const date = new Date(blog[1]); // 获取日期
         //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`; // 格式化日期为 MM-DD
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
+        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
+        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
+
         const formattedDate = `${month}-${day}`
         // 创建 <li> 元素
         const listItem = document.createElement('li');
