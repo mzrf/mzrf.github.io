@@ -20,6 +20,8 @@
         #toc a{display:inline-block;width:100%}
         #toc li{list-style:no;padding:0.25rem;}
         #toc li:hover{color: #1a5fd0;background:#e8f0fe;padding:0.5rem 0.25rem;}
+        #right li:hover{color: #1a5fd0;background:#e8f0fe;padding:0.5rem 0.25rem;}
+        #right li{display:flex;justify-content:space-between;}
         #toc li::marker{content:none}
         /*#toc ul,#toc li{list-style:none;padding-left: 1rem;position: relative;}
         #toc ul::before{content: '';position:absolute;top:0;left:0.5rem;bottom:0;width:1px;background:#ccc}
@@ -119,6 +121,43 @@
         
         
     });
+        document.addEventListener('DOMContentLoaded', function () {
+  // 从 list.json 动态加载数据
+  fetch('list.json')
+    .then(response => response.json())
+    .then(listData => {
+      // 1. 按照日期进行降序排序（从最新的开始）
+      listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
+
+      // 2. 获取最新的 10 个博客
+      const latestBlogs = listData.slice(0, 10);
+
+      // 3. 获取 #latest 元素
+      const latestContainer = document.getElementById('right');
+      latestContainer.innerHTML = ''; // 清空现有内容
+
+      // 4. 遍历最新的博客并生成内容
+      latestBlogs.forEach(blog => {
+        const fileName = blog[0]; // 文件名
+        const date = new Date(blog[1]); // 获取日期
+        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`; // 格式化日期为 MM-DD
+        const formattedDate = `${month}-${day}`
+        // 创建 <li> 元素
+        const listItem = document.createElement('li');
+
+        // 创建链接，并显示文件名和日期
+        listItem.innerHTML = `
+          <a href="blog.html?p=${fileName}">${fileName}</a> 
+          <i class="date">${formattedDate}</i>
+        `;
+
+        // 将 <li> 元素添加到 #latest 中的 <ul> 元素里
+        latestContainer.appendChild(listItem);
+      });
+    })
+    .catch(error => console.error('Error loading list.json:', error));
+});
+
         // if (!isTocLink) {
         //     // 如果点击的不是#toc内的链接，隐藏#toc
         //     toc.classList.add("hide")
