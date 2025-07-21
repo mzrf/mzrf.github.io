@@ -72,11 +72,41 @@
 	</main>
 </body>
 <script>
-  document.querySelectorAll('.toggle').forEach(folder => {
-    folder.addEventListener('click', function (e) {
-      e.stopPropagation();
-      this.classList.toggle('active');
-    });
-  });
+	document.addEventListener('DOMContentLoaded', function () {
+  // 从 list.json 动态加载数据
+  fetch('list.json')
+    .then(response => response.json())
+    .then(listData => {
+      const tree = document.getElementById('tree'); // 获取树形目录的父容器
+
+      // 生成 2025 文件夹节点
+      const yearNode = document.createElement('li');
+      yearNode.classList.add('folder', 'toggle');
+      yearNode.innerHTML = `📁 2025`;
+
+      const nestedList = document.createElement('ul');
+      nestedList.classList.add('tree', 'nested');
+
+      // 遍历 listData 创建文件项
+      listData.forEach(file => {
+        const fileNode = document.createElement('li');
+        fileNode.innerHTML = `<span class="file"><a href="blog.html?p=${file[0]}">${file[0]}</a></span> <span class="comment">${file[1]}</span>`;
+        nestedList.appendChild(fileNode);
+      });
+
+      yearNode.appendChild(nestedList);
+      tree.appendChild(yearNode);
+
+      // 使文件夹可展开/收起
+      document.querySelectorAll('.toggle').forEach(folder => {
+        folder.addEventListener('click', function (e) {
+          e.stopPropagation();
+          this.classList.toggle('active');
+        });
+      });
+    })
+    .catch(error => console.error('Error loading list.json:', error));
+});
+
 </script>
 </html>
