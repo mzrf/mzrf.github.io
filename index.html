@@ -46,7 +46,7 @@
         const latest = list.slice(-3).reverse();
         const container = document.getElementById('latest');
        container.innerHTML = latest.map(([name, date]) => 
-	  `<li><a href="blog.html?p=${encodeURIComponent(name)}">${name}</a><i>${date}</i></li>`
+	  `<li><a href="blog.html?p=p/${encodeURIComponent(name)}">${name}</a><i>${date}</i></li>`
 	).join('');
       });
 </script>
