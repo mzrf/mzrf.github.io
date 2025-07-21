@@ -129,10 +129,7 @@ Bob-->>John: How about you John?
 Bob--x Alice: I am good thanks!
 Bob-x John: I am good thanks!
 Note right of John
-  Bob thinks a long
-  long time, so long
-  that the text does
-  not fit on a row.
+  Bob thinks a long, long time, so long,that the text does not fit on a row.
 end note
 
 Bob-->Alice: Checking with John...
