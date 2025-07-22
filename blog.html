@@ -124,7 +124,9 @@
         
         
     });
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {        
+            document.addEventListener('DOMContentLoaded', () => new MarkdownRenderer());
+    });
 
 
         // if (!isTocLink) {
@@ -292,9 +294,6 @@
                 `;
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => new MarkdownRenderer());
-    });
               // 从 list.json 动态加载数据
   fetch('list.json')
     .then(response => response.json())
