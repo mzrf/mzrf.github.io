@@ -124,45 +124,7 @@
         
     });
         document.addEventListener('DOMContentLoaded', function () {
-  // 从 list.json 动态加载数据
-  fetch('list.json')
-    .then(response => response.json())
-    .then(listData => {
-      // 1. 按照日期进行降序排序（从最新的开始）
-      listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
 
-      // 2. 获取最新的 10 个博客
-      const latestBlogs = listData.slice(0, 10);
-
-      // 3. 获取 #latest 元素
-      const latestContainer = document.getElementById('right');
-      latestContainer.innerHTML = ''; // 清空现有内容
-
-      // 4. 遍历最新的博客并生成内容
-      latestBlogs.forEach(blog => {
-        const fileName = blog[0]; // 文件名
-        const date = new Date(blog[1]); // 获取日期
-        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`; // 格式化日期为 MM-DD
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
-        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
-        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
-
-        // const formattedDate = `${month}-${day}`
-        // 创建 <li> 元素
-        const listItem = document.createElement('li');
-
-        // 创建链接，并显示文件名和日期
-        listItem.innerHTML = `
-          <a href="blog.html?p=${fileName}">${fileName}</a> 
-          <i class="date">${formattedDate}</i>
-        `;
-
-        // 将 <li> 元素添加到 #latest 中的 <ul> 元素里
-        latestContainer.appendChild(listItem);
-      });
-    })
-    .catch(error => console.error('Error loading list.json:', error));
-});
 
         // if (!isTocLink) {
         //     // 如果点击的不是#toc内的链接，隐藏#toc
@@ -331,6 +293,45 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => new MarkdownRenderer());
+              // 从 list.json 动态加载数据
+  fetch('list.json')
+    .then(response => response.json())
+    .then(listData => {
+      // 1. 按照日期进行降序排序（从最新的开始）
+      listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
+
+      // 2. 获取最新的 10 个博客
+      const latestBlogs = listData.slice(0, 10);
+
+      // 3. 获取 #latest 元素
+      const latestContainer = document.getElementById('right');
+      latestContainer.innerHTML = ''; // 清空现有内容
+
+      // 4. 遍历最新的博客并生成内容
+      latestBlogs.forEach(blog => {
+        const fileName = blog[0]; // 文件名
+        const date = new Date(blog[1]); // 获取日期
+        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`; // 格式化日期为 MM-DD
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
+        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
+        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
+
+        // const formattedDate = `${month}-${day}`
+        // 创建 <li> 元素
+        const listItem = document.createElement('li');
+
+        // 创建链接，并显示文件名和日期
+        listItem.innerHTML = `
+          <a href="blog.html?p=p/${fileName}">${fileName}</a> 
+          <i class="date">${formattedDate}</i>
+        `;
+
+        // 将 <li> 元素添加到 #latest 中的 <ul> 元素里
+        latestContainer.appendChild(listItem);
+      });
+    })
+    .catch(error => console.error('Error loading list.json:', error));
+});
     </script>
 </body>
 </html>
