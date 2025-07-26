@@ -124,6 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isTocLink) {
                 event.preventDefault(); // ✅ 阻止默认锚点跳转
                 const targetId = isTocLink.getAttribute('href').substring(1);
+                console.log(targetId)
                 const targetElement = document.getElementById(targetId);
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth' });
