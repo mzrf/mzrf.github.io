@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 计算 offsetTop - 偏移距离
                 const rect = targetElement.getBoundingClientRect();
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                const offset = 3 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 3rem
+                const offset = 4 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 3rem
                 const top = rect.top + scrollTop - offset;
 
                 window.scrollTo({
