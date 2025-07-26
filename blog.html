@@ -109,36 +109,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
    document.addEventListener('click', function(event) {
-        const width = window.innerWidth;
-        if (width < 1380) {
-            const isTocLink = event.target.closest('#toc a');
-            const isToggleBtn = event.target.closest('#toctoggle');
-    
-            if (!isTocLink && !isToggleBtn) {
-                // 点击页面其它地方，隐藏 toc
-                toc.classList.remove("show");
-                menuBtn.classList.remove("hide");
-                return;
-            }
-    
-            if (isTocLink) {
-                event.preventDefault(); // ✅ 阻止默认锚点跳转
-                const targetId = isTocLink.getAttribute('href').substring(1);
-                console.log(targetId)
-                const targetElement = document.getElementById(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({ behavior: 'smooth' });
-                    // 延迟后上移 3rem
-                    setTimeout(() => {
-                        const offset = 3 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 3rem
-                        window.scrollBy(0, -offset);
-                    }, 300); // 设置稍长的时间更平滑
-                }
-                toc.classList.remove("show");
-                menuBtn.classList.remove("hide");
-            }
+    const width = window.innerWidth;
+    const isTocLink = event.target.closest('#toc a');
+    const isToggleBtn = event.target.closest('#toctoggle');
+
+    if (width < 1380) {
+        if (!isTocLink && !isToggleBtn) {
+            toc.classList.remove("show");
+            menuBtn.classList.remove("hide");
+            return;
         }
-    });
+
+        if (isTocLink) {
+            event.preventDefault();
+
+            const targetId = isTocLink.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                // 计算 offsetTop - 偏移距离
+                const rect = targetElement.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const offset = 3 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 3rem
+                const top = rect.top + scrollTop - offset;
+
+                window.scrollTo({
+                    top: top,
+                    behavior: 'smooth'
+                });
+            }
+
+            toc.classList.remove("show");
+            menuBtn.classList.remove("hide");
+        }
+    }
+});
+
+    
 
     // 📌 Markdown 渲染器类定义
     class MarkdownRenderer {
