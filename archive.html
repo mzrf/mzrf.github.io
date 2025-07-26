@@ -14,9 +14,8 @@ main{width:calc(100vw - 44rem);margin:3rem auto 0 auto;height:calc(100vh - 3rem)
 ul{list-style: none; padding-left:1rem; position: relative;display:inline-block; }
 ul::before { content: ''; position: absolute; top: 0; left: 0.75rem; bottom: 0; width: 3px; background: #ccc; }
 ul > li { position: relative; padding-left: 1rem; margin: 0.5rem 0; cursor: pointer;}
-.nested>li{display:flex;justify-content:space-between;padding:0.25rem 1rem;}
-.nested>li:hover{background-color: #eef;}
-li>a{color:#0366d6}
+.nested a{display:flex;justify-content:space-between;padding:0.25rem 1rem;}
+.nested>a:hover{background-color: #eef;}
 li>i{margin-left:1rem;color:#777;font-weight:normal;}
 .nested > li::before {position: absolute;top: 0.75rem; left:-0.2rem; width: 0.5rem; height: 1px; background: #ccc;content:'' }
 .nested::before{width:1px}
@@ -83,7 +82,7 @@ section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px so
         const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
         const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
         //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`;
-        fileNode.innerHTML = `<span class="file"><a href="blog.html?p=p/${file[0]}">${file[0]}</a></span> <i class="comment">${formattedDate}</i>`;
+        fileNode.innerHTML = `<a class="file"href="blog.html?p=p/${file[0]}"><span>${file[0]}</span> <i class="comment">${formattedDate}</i></a>`;
         nestedList.appendChild(fileNode);
       });
 
