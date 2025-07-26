@@ -7,7 +7,7 @@
     <style type="text/css">
         * { margin: 0; padding: 0; box-sizing: border-box;}
         a{text-decoration: none;color:#0366d6;}
-        .hide{display:none !important}.show{display:block !important;}
+        .hide{display:none !important}.show{transform: translateX(0);display:block !important;}
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
         html::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
         body::-webkit-scrollbar, {display: none}
@@ -59,7 +59,17 @@
             nav { justify-content: space-around; }
             nav .label { display: none; }
             main{justify-content:space-around;flex-wrap: wrap;}
-            #toc{display:none;}
+            #toc{
+            transition: all 0.3s ease;
+  /* 初始隐藏 */
+  transform: translateX(-100%);
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 70%;
+  background: white;
+  overflow-y: auto;}
             #preview{padding:0.5rem;font-size:14px !important}
             .main,aside{width:calc(100vw - 1rem ),font-size:0.9rem}
             .main ul{padding-left: 1rem !important}
@@ -93,45 +103,83 @@
     <script type="text/javascript">
     const toc = document.getElementById('toc');
     const menuBtn = document.getElementById('toctoggle');
-    // 菜单按钮点击逻辑：显示或隐藏目录
-    menuBtn.addEventListener('click', function(event) {
-        toc.classList.add("show")
-        menuBtn.classList.add("hide")
-        event.stopPropagation()
-        //toc.style.display = toc.style.display === 'none' || toc.style.display === '' ? 'block' : 'none';
-    });
+        document.addEventListener('click', function(event) {
+    const width = window.innerWidth;
+    if (width < 1380) {
+        const isTocLink = event.target.closest('#toc a');
 
-    // 监听点击事件
-    document.addEventListener('click', function(event) {
-        // 检查点击的元素是否是#toc内的链接
-        const width = window.innerWidth;
-        if(width<1380){
-            const isTocLink = event.target.closest('#toc a');
+        if (!isTocLink && !event.target.closest('#toctoggle')) {
+            // 点击空白区域
+            toc.classList.remove("show");
+            document.body.style.overflow = '';
+        } else if (isTocLink) {
+            event.preventDefault(); // 阻止默认跳转
+            const targetId = isTocLink.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
 
-            // 如果点击的不是#toc内的链接，隐藏#toc
-            if (!isTocLink && !event.target.closest('#toctoggle')) {
-                toc.classList.remove("show")
-            } else if (isTocLink) {
-                // 如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
-                const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
-                const targetElement = document.getElementById(targetId);
+            // 隐藏 toc 后再跳转
+            toc.classList.remove("show");
+            document.body.style.overflow = '';
+            menuBtn.classList.remove("hide");
+
+            setTimeout(() => {
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth' });
+                    // 手动上移 3rem
                     setTimeout(() => {
-                        window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize)); // 3rem向上滚动
-                    }, 50);
+                        window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize));
+                    }, 100); // 等待 scrollIntoView 完成再 scrollBy
                 }
-                toc.classList.remove("show")
-            }
-            menuBtn.classList.remove("hide")
-            event.stopPropagation()
+            }, 300); // 给 toc 动画或隐藏过程一点时间
         }
+
+        if (!isTocLink) {
+            menuBtn.classList.remove("hide");
+        }
+
+        event.stopPropagation();
+    }
+});
+
+    // // 菜单按钮点击逻辑：显示或隐藏目录
+    // menuBtn.addEventListener('click', function(event) {
+    //     toc.classList.add("show")
+    //     menuBtn.classList.add("hide")
+    //     event.stopPropagation()
+    //     //toc.style.display = toc.style.display === 'none' || toc.style.display === '' ? 'block' : 'none';
+    // });
+
+    // // 监听点击事件
+    // document.addEventListener('click', function(event) {
+    //     // 检查点击的元素是否是#toc内的链接
+    //     const width = window.innerWidth;
+    //     if(width<1380){
+    //         const isTocLink = event.target.closest('#toc a');
+
+    //         // 如果点击的不是#toc内的链接，隐藏#toc
+    //         if (!isTocLink && !event.target.closest('#toctoggle')) {
+    //             toc.classList.remove("show")
+    //         } else if (isTocLink) {
+    //             // 如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
+    //             const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
+    //             const targetElement = document.getElementById(targetId);
+    //             if (targetElement) {
+    //                 targetElement.scrollIntoView({ behavior: 'smooth' });
+    //                 setTimeout(() => {
+    //                     window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize)); // 3rem向上滚动
+    //                 }, 50);
+    //             }
+    //             toc.classList.remove("show")
+    //         }
+    //         menuBtn.classList.remove("hide")
+    //         event.stopPropagation()
+    //     }
         
         
-    });
-        document.addEventListener('DOMContentLoaded', function () {        
+    // });
+    //     document.addEventListener('DOMContentLoaded', function () {        
             
-    });
+    // });
 
 
         // if (!isTocLink) {
