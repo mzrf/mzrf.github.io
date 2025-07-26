@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const level = heading.match(/^#{1,6}/)[0].length;
                 const text = heading.replace(/^#{1,6}\s/, '');
                 const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
+                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#section-${id}">${text}</a></li>`;
             }, '<ul>') + '</ul>';
         }
 
