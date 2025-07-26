@@ -15,7 +15,9 @@
 		h1,p{text-align:center;margin-top:10rem}
 		p{text-align:center;margin:2rem 0 10rem 0}
 		section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem;max-width:960px;margin:0 auto}
-		li{display:flex;gap:1rem;padding:0.5rem}
+		.latest a{display:flex;gap:1rem;padding:0.5rem}
+		.latest span,.latest i{display: inline-block}
+		.lstest i{color:#777}
 		li i{color:#777}
 		li:hover{background:#e8f0fe}
 		@media (max-width: 600px){
@@ -48,7 +50,7 @@
         const latest = list.slice(-3).reverse();
         const container = document.getElementById('latest');
        container.innerHTML = latest.map(([name, date]) => 
-	  `<li><a href="blog.html?p=p/${encodeURIComponent(name)}">${name}</a><i>${date}</i></li>`
+	  `<li><a href="blog.html?p=p/${encodeURIComponent(name)}"><span>${name}</span><i>${date}</i></a></li>`
 	).join('');
       });
 </script>
