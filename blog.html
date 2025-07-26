@@ -124,6 +124,7 @@
             event.preventDefault();
 
             const targetId = isTocLink.getAttribute('href').substring(1);
+            console.log(targetId)
             const targetElement = document.getElementById(targetId);
 
             if (targetElement) {
