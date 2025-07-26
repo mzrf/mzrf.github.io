@@ -231,15 +231,17 @@ document.addEventListener('DOMContentLoaded', () => {
         generateTOC(markdown) {
             const headings = markdown.match(/^(#{1,6})\s(.+)$/gm);
             if (!headings) return '<ul><li>没有发现标题</li></ul>';
-
+        
             return headings.reduce((toc, heading) => {
                 const level = heading.match(/^#{1,6}/)[0].length;
                 const text = heading.replace(/^#{1,6}\s/, '');
-                const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#section-${id}">${text}</a></li>`;
+                // 保留中文，替换空格为 -，去除特殊字符（不删中文）
+                const id = 'section-' + text.trim().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '');
+                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
             }, '<ul>') + '</ul>';
         }
 
+        
         // 将 ```mermaid 代码块转换为 <div class="mermaid">
         preprocessMermaid(markdown) {
             this.mermaidCounter = 0;
