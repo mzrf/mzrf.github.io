@@ -91,242 +91,236 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.3.1/mermaid.min.js"></script>
     <script type="text/javascript">
+document.addEventListener('DOMContentLoaded', () => {
     const toc = document.getElementById('toc');
     const menuBtn = document.getElementById('toctoggle');
-    
 
-    // // 菜单按钮点击逻辑：显示或隐藏目录
-    menuBtn.addEventListener('click', function(event) {
-        toc.classList.add("show")
-        menuBtn.classList.add("hide")
-        event.stopPropagation()
-        //toc.style.display = toc.style.display === 'none' || toc.style.display === '' ? 'block' : 'none';
-    });
+    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
+    if (menuBtn && toc) {
+        menuBtn.addEventListener('click', function (event) {
+            toc.classList.add("show");
+            menuBtn.classList.add("hide");
+            event.stopPropagation();
+        });
+    }
 
-    // 监听点击事件
-    document.addEventListener('click', function(event) {
-        // 检查点击的元素是否是#toc内的链接
+    // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
+    document.addEventListener('click', function (event) {
         const width = window.innerWidth;
-        if(width<1380){
+        if (width < 1380) {
             const isTocLink = event.target.closest('#toc a');
 
-            // 如果点击的不是#toc内的链接，隐藏#toc
             if (!isTocLink && !event.target.closest('#toctoggle')) {
-                toc.classList.remove("show")
+                // 点击了非目录链接区域，隐藏 TOC
+                toc.classList.remove("show");
             } else if (isTocLink) {
-                //如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
-                const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
+                // 点击 TOC 链接，滚动跳转 + 隐藏 TOC
+                const targetId = isTocLink.getAttribute('href').substring(1);
                 const targetElement = document.getElementById(targetId);
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth' });
                     setTimeout(() => {
-                        window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize)); // 3rem向上滚动
+                        // 往上滚动 3rem (以字体大小为单位)
+                        window.scrollBy(0, -3 * parseFloat(getComputedStyle(document.documentElement).fontSize));
                     }, 50);
                 }
-                toc.classList.remove("show")
+                toc.classList.remove("show");
             }
-            menuBtn.classList.remove("hide")
-            event.stopPropagation()
+
+            // 恢复显示菜单按钮
+            menuBtn.classList.remove("hide");
+            event.stopPropagation();
         }
-        
-        
-    // });
-    //     document.addEventListener('DOMContentLoaded', function () {        
-            
-    // });
+    });
 
+    // 📌 Markdown 渲染器类定义
+    class MarkdownRenderer {
+        constructor() {
+            this.preview = document.getElementById('preview');
+            this.tocElement = document.getElementById('toc');
+            this.mermaidCounter = 0;
+            this.initializeLibraries();
+            this.loadMarkdownFromURL();
+        }
 
-        class MarkdownRenderer {
-            constructor() {
-                this.preview = document.getElementById('preview');
-                this.tocElement = document.getElementById('toc');
-                this.mermaidCounter = 0;
-                this.loadMarkdownFromURL();
-            }
-
-            // 初始化 marked 和 mermaid 配置
-            initializeLibraries() {
-                marked.setOptions({
-                    highlight: function (code, lang) {
-                        if (lang && hljs.getLanguage(lang)) {
-                            try {
-                                return hljs.highlight(code, { language: lang }).value;
-                            } catch (err) {
-                                console.warn('语法高亮错误:', err);
-                            }
+        // 初始化 marked、mermaid 配置
+        initializeLibraries() {
+            marked.setOptions({
+                highlight: function (code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (err) {
+                            console.warn('语法高亮错误:', err);
                         }
-                        return hljs.highlightAuto(code).value;
-                    },
-                    breaks: true,
-                    gfm: true,
-                    headerIds: true,
-                    headerPrefix: 'section-'
-                });
-
-                mermaid.initialize({
-                    startOnLoad: false,
-                    theme: 'default',
-                    themeVariables: {
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        fontSize: '14px'
-                    },
-                    flowchart: { useMaxWidth: true, htmlLabels: true },
-                    sequence: { useMaxWidth: true, actorMargin: 50 }
-                });
-            }
-
-            // 从 URL 获取 Markdown 文件
-            async loadMarkdownFromURL() {
-                const params = new URLSearchParams(window.location.search);
-                const mdFileName = params.get('p') || 'p/readme.md';
-
-                try {
-                    const response = await fetch(mdFileName);
-                    if (!response.ok) throw new Error('无法加载文件');
-                    const markdownText = await response.text();
-                    this.render(markdownText);
-                } catch (error) {
-                    console.error('错误:', error);
-                    this.showError('加载错误', `无法加载文件 ${mdFileName}`);
-                }
-            }
-
-            // 渲染 Markdown 和 TOC
-            async render(markdown) {
-                if (!markdown.trim()) {
-                    this.preview.innerHTML = '<div class="loading">请输入 Markdown 文本...</div>';
-                    return;
-                }
-
-                const toc = this.generateTOC(markdown);
-                this.tocElement.innerHTML = toc;
-
-                // 预处理 Mermaid 代码块
-                const processedMarkdown = this.preprocessMermaid(markdown);
-
-                // 渲染 Markdown 内容
-                let html = marked.parse(processedMarkdown);
-                html = await this.renderMath(html);
-                this.preview.innerHTML = html;
-
-                // 渲染 Mermaid 图表
-                await this.renderMermaid();
-            }
-
-            // 生成目录
-            generateTOC(markdown) {
-                const headings = markdown.match(/^(#{1,6})\s(.+)$/gm);
-                if (!headings) return '<ul><li>没有发现标题</li></ul>';
-
-                return headings.reduce((toc, heading) => {
-                    const level = heading.match(/^#{1,6}/)[0].length;
-                    const text = heading.replace(/^#{1,6}\s/, '');
-                    const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
-                    return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
-                }, '<ul>') + '</ul>';
-            }
-
-            // 预处理 Mermaid 代码块
-            preprocessMermaid(markdown) {
-                this.mermaidCounter = 0;
-                return markdown.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, code) => {
-                    const id = `mermaid-${this.mermaidCounter++}`;
-                    return `<div class="mermaid" id="${id}">${code.trim()}</div>`;
-                });
-            }
-
-            // 渲染 Mermaid 图表
-            async renderMermaid() {
-                const mermaidElements = this.preview.querySelectorAll('.mermaid');
-                for (const element of mermaidElements) {
-                    try {
-                        const graphDefinition = element.textContent.trim();
-                        const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
-                        element.innerHTML = svg;
-                    } catch (error) {
-                        console.error('Mermaid 渲染错误:', error);
-                        element.innerHTML = `<div class="error-message">
-                            <strong>Mermaid 图表渲染错误:</strong>
-                            ${error.message}
-                        </div>`;
                     }
-                }
-            }
+                    return hljs.highlightAuto(code).value;
+                },
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                headerPrefix: 'section-'
+            });
 
-            // 渲染 LaTeX 数学公式
-            async renderMath(html) {
-                try {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'default',
+                themeVariables: {
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontSize: '14px'
+                },
+                flowchart: { useMaxWidth: true, htmlLabels: true },
+                sequence: { useMaxWidth: true, actorMargin: 50 }
+            });
+        }
 
-                    renderMathInElement(tempDiv, {
-                        delimiters: [
-                            { left: '$$', right: '$$', display: true },
-                            { left: '$', right: '$', display: false },
-                            { left: '\\(', right: '\\)', display: false },
-                            { left: '\\[', right: '\\]', display: true }
-                        ],
-                        throwOnError: false,
-                        errorColor: '#cc0000',
-                        strict: 'ignore'
-                    });
+        // 加载 Markdown 内容
+        async loadMarkdownFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const mdFileName = params.get('p') || 'p/readme.md';
 
-                    return tempDiv.innerHTML;
-                } catch (error) {
-                    console.error('LaTeX 渲染错误:', error);
-                    return html;
-                }
-            }
-
-            // 显示错误信息
-            showError(title, message) {
-                this.preview.innerHTML = `
-                    <div class="error-message">
-                        <strong>${title}</strong>
-                        ${message}
-                    </div>
-                `;
+            try {
+                const response = await fetch(mdFileName);
+                if (!response.ok) throw new Error(`无法加载文件 ${mdFileName}`);
+                const markdownText = await response.text();
+                this.render(markdownText);
+            } catch (error) {
+                console.error('加载失败:', error);
+                this.showError('加载错误', `无法加载文件 ${mdFileName}`);
             }
         }
-        document.addEventListener('DOMContentLoaded', () => new MarkdownRenderer());
-              // 从 list.json 动态加载数据
-  fetch('list.json')
-    .then(response => response.json())
-    .then(listData => {
-      // 1. 按照日期进行降序排序（从最新的开始）
-      listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
 
-      // 2. 获取最新的 10 个博客
-      const latestBlogs = listData.slice(0, 10);
+        // 渲染 Markdown + TOC
+        async render(markdown) {
+            if (!markdown.trim()) {
+                this.preview.innerHTML = '<div class="loading">请输入 Markdown 文本...</div>';
+                return;
+            }
 
-      // 3. 获取 #latest 元素
-      const latestContainer = document.getElementById('right');
-      latestContainer.innerHTML = ''; // 清空现有内容
+            // 渲染目录
+            const toc = this.generateTOC(markdown);
+            this.tocElement.innerHTML = toc;
 
-      // 4. 遍历最新的博客并生成内容
-      latestBlogs.forEach(blog => {
-        const fileName = blog[0]; // 文件名
-        const date = new Date(blog[1]); // 获取日期
-        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`; // 格式化日期为 MM-DD
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
-        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
-        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
+            // 预处理 mermaid 图
+            const processedMarkdown = this.preprocessMermaid(markdown);
 
-        // const formattedDate = `${month}-${day}`
-        // 创建 <li> 元素
-        const listItem = document.createElement('li');
+            // 渲染内容
+            let html = marked.parse(processedMarkdown);
+            html = await this.renderMath(html);
+            this.preview.innerHTML = html;
 
-        // 创建链接，并显示文件名和日期
-        listItem.innerHTML = `
-          <a href="blog.html?p=p/${fileName}">${fileName}</a> 
-          <i class="date">${formattedDate}</i>
-        `;
+            // 渲染 mermaid
+            await this.renderMermaid();
+        }
 
-        // 将 <li> 元素添加到 #latest 中的 <ul> 元素里
-        latestContainer.appendChild(listItem);
-      });
-    })
-    .catch(error => console.error('Error loading list.json:', error));
-    </script>
+        // 生成 TOC HTML
+        generateTOC(markdown) {
+            const headings = markdown.match(/^(#{1,6})\s(.+)$/gm);
+            if (!headings) return '<ul><li>没有发现标题</li></ul>';
+
+            return headings.reduce((toc, heading) => {
+                const level = heading.match(/^#{1,6}/)[0].length;
+                const text = heading.replace(/^#{1,6}\s/, '');
+                const id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
+            }, '<ul>') + '</ul>';
+        }
+
+        // 将 ```mermaid 代码块转换为 <div class="mermaid">
+        preprocessMermaid(markdown) {
+            this.mermaidCounter = 0;
+            return markdown.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, code) => {
+                const id = `mermaid-${this.mermaidCounter++}`;
+                return `<div class="mermaid" id="${id}">${code.trim()}</div>`;
+            });
+        }
+
+        // 渲染 mermaid 图
+        async renderMermaid() {
+            const mermaidElements = this.preview.querySelectorAll('.mermaid');
+            for (const element of mermaidElements) {
+                try {
+                    const graphDefinition = (element.textContent || '').trim();
+                    const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
+                    element.innerHTML = svg;
+                } catch (error) {
+                    console.error('Mermaid 渲染错误:', error);
+                    element.innerHTML = `<div class="error-message">
+                        <strong>Mermaid 图表渲染错误:</strong>
+                        ${error.message}
+                    </div>`;
+                }
+            }
+        }
+
+        // 渲染数学公式
+        async renderMath(html) {
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+
+                renderMathInElement(tempDiv, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ],
+                    throwOnError: false,
+                    errorColor: '#cc0000',
+                    strict: 'ignore'
+                });
+
+                return tempDiv.innerHTML;
+            } catch (error) {
+                console.error('LaTeX 渲染错误:', error);
+                return html;
+            }
+        }
+
+        // 显示错误信息
+        showError(title, message) {
+            this.preview.innerHTML = `
+                <div class="error-message">
+                    <strong>${title}</strong>
+                    ${message}
+                </div>
+            `;
+        }
+    }
+
+    // 初始化渲染器
+    new MarkdownRenderer();
+
+    // 📌 加载 list.json 动态生成博客列表
+    fetch('list.json')
+        .then(response => response.json())
+        .then(listData => {
+            // 按时间倒序排序
+            listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
+
+            // 获取最新 10 条
+            const latestBlogs = listData.slice(0, 10);
+            const latestContainer = document.getElementById('right');
+            latestContainer.innerHTML = '';
+
+            latestBlogs.forEach(blog => {
+                const fileName = blog[0];
+                const date = new Date(blog[1]);
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const formattedDate = `${month}-${day}`;
+
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <a href="blog.html?p=p/${fileName}">${fileName}</a> 
+                    <i class="date">${formattedDate}</i>
+                `;
+                latestContainer.appendChild(listItem);
+            });
+        })
+        .catch(error => console.error('Error loading list.json:', error));
+});
+</script>
 </body>
 </html>
