@@ -94,56 +94,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.3.1/mermaid.min.js"></script>
     <script type="text/javascript">
-document.addEventListener('DOMContentLoaded', () => {
-    const toc = document.getElementById('toc');
-    const menuBtn = document.getElementById('toctoggle');
-
-    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
-    if (menuBtn && toc) {
-        menuBtn.addEventListener('click', function (event) {
-            toc.classList.add("show");
-            menuBtn.classList.add("hide");
-            event.stopPropagation();
-        });
-    }
-    // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
-   document.addEventListener('click', function(event) {
-    if (!toc || !menuBtn) return;
-    const width = window.innerWidth;
-    const isTocLink = event.target.closest('#toc a');
-    const isToggleBtn = event.target.closest('#toctoggle');
-
-    if (width < 1380) {
-        if (!isTocLink && !isToggleBtn) {
-            toc.classList.remove("show");
-            menuBtn.classList.remove("hide");
-            return;
-        }
-
-        if (isTocLink) {
-            event.preventDefault();
-
-            const targetId = isTocLink.getAttribute('href').substring(1);
-            const targetElement = document.getElementById(targetId);
-
-            if (targetElement) {
-                // 计算 offsetTop - 偏移距离
-                const rect = targetElement.getBoundingClientRect();
-                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                const offset = 4 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 4rem
-                const top = rect.top + scrollTop - offset;
-
-                window.scrollTo({
-                    top: top,
-                    behavior: 'smooth'
-                });
-            }
-
-            toc.classList.remove("show");
-            menuBtn.classList.remove("hide");
-        }
-    }
-});
         
     // 📌 Markdown 渲染器类定义
     class MarkdownRenderer {
@@ -333,6 +283,58 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         })
         .catch(error => console.error('Error loading list.json:', error));
+
+
+        
+        document.addEventListener('DOMContentLoaded', () => {
+    const toc = document.getElementById('toc');
+    const menuBtn = document.getElementById('toctoggle');
+
+    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
+    if (menuBtn && toc) {
+        menuBtn.addEventListener('click', function (event) {
+            toc.classList.add("show");
+            menuBtn.classList.add("hide");
+            event.stopPropagation();
+        });
+    }
+    // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
+   document.addEventListener('click', function(event) {
+    if (!toc || !menuBtn) return;
+    const width = window.innerWidth;
+    const isTocLink = event.target.closest('#toc a');
+    const isToggleBtn = event.target.closest('#toctoggle');
+
+    if (width < 1380) {
+        if (!isTocLink && !isToggleBtn) {
+            toc.classList.remove("show");
+            menuBtn.classList.remove("hide");
+            return;
+        }
+
+        if (isTocLink) {
+            event.preventDefault();
+
+            const targetId = isTocLink.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+
+            if (targetElement) {
+                // 计算 offsetTop - 偏移距离
+                const rect = targetElement.getBoundingClientRect();
+                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const offset = 4 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 4rem
+                const top = rect.top + scrollTop - offset;
+
+                window.scrollTo({
+                    top: top,
+                    behavior: 'smooth'
+                });
+            }
+
+            toc.classList.remove("show");
+            menuBtn.classList.remove("hide");
+        }
+    }
 });
 </script>
 </body>
