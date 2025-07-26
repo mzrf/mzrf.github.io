@@ -235,7 +235,7 @@
                 const level = heading.match(/^#{1,6}/)[0].length;
                 const text = heading.replace(/^#{1,6}\s/, '');
                 // 保留中文，替换空格为 -，去除特殊字符（不删中文）
-                const id = 'section-' + text.trim().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '');
+                const id = 'section-' + text.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '');
                 return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
             }, '<ul>') + '</ul>';
         }
