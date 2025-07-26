@@ -114,7 +114,7 @@
             if (!isTocLink && !event.target.closest('#toctoggle')) {
                 toc.classList.remove("show")
             } else if (isTocLink) {
-                如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
+                //如果点击的是#toc内的链接，跳转到指定位置并隐藏#toc
                 const targetId = isTocLink.getAttribute('href').substring(1); // 获取目标id
                 const targetElement = document.getElementById(targetId);
                 if (targetElement) {
