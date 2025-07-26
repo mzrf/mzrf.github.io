@@ -94,6 +94,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.3.1/mermaid.min.js"></script>
     <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+    const toc = document.getElementById('toc');
+    const menuBtn = document.getElementById('toctoggle');
+
+    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
+    if (menuBtn && toc) {
+        menuBtn.addEventListener('click', function (event) {
+            toc.classList.add("show");
+            menuBtn.classList.add("hide");
+            event.stopPropagation();
+        });
+    }
     // 📌 Markdown 渲染器类定义
     class MarkdownRenderer {
         constructor() {
@@ -283,18 +295,8 @@
         })
         .catch(error => console.error('Error loading list.json:', error));
 });
-    document.addEventListener('DOMContentLoaded', () => {
-    const toc = document.getElementById('toc');
-    const menuBtn = document.getElementById('toctoggle');
-
-    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
-    if (menuBtn && toc) {
-        menuBtn.addEventListener('click', function (event) {
-            toc.classList.add("show");
-            menuBtn.classList.add("hide");
-            event.stopPropagation();
-        });
-    }
+        
+    
 
     // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
    document.addEventListener('click', function(event) {
