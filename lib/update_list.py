@@ -1,15 +1,15 @@
 import os
 import json
 from datetime import datetime
+import re # Import the regular expression module
 
-def update_file_list_and_clean_filename_for_github_actions():
+def update_file_list_and_clean_filename_with_brackets():
     p_dir = 'p'
     list_json_path = 'list.json'
 
     # Ensure the 'p' directory exists
     if not os.path.isdir(p_dir):
         print(f"Error: Directory '{p_dir}' not found. Please create it.")
-        # In GitHub Actions, exiting here might fail the job, which is often desired.
         return
 
     # Get all .md filenames in p/ (these are the original filenames)
@@ -28,12 +28,10 @@ def update_file_list_and_clean_filename_for_github_actions():
             print(f"Warning: '{list_json_path}' is malformed. Initializing with empty list.")
             file_list_from_json = []
         except FileNotFoundError:
-            # This should ideally not happen if os.path.exists is true, but good practice.
             print(f"Warning: '{list_json_path}' not found, creating a new one.")
             file_list_from_json = []
     
     # Convert existing file list to a dictionary for easy lookup by the *cleaned* filename.
-    # This is crucial for checking for duplicates based on the cleaned filename.
     existing_file_map = {}
     for item in file_list_from_json:
         if isinstance(item, dict) and "1" in item:
@@ -46,35 +44,40 @@ def update_file_list_and_clean_filename_for_github_actions():
         
         # Initialize tags and a cleaned filename
         tags = []
-        # Default cleaned_filename to original, in case no backtick is found.
-        cleaned_filename = original_filename 
+        cleaned_filename = original_filename # Start with original
 
-        # Extract tags and modify filename
-        first_backtick_index = original_filename.find('`')
-        if first_backtick_index != -1:
-            second_backtick_index = original_filename.find('`', first_backtick_index + 1)
+        # --- TAG EXTRACTION AND FILENAME CLEANING USING REGEX ---
+        # Regex pattern to find [tags] in the filename, then capture the part before it.
+        # It also handles .md extension potentially being before the tags.
+        match = re.search(r'^(.*?)(?:\[([^\]]+)\])?(.*?)(\.md)$', original_filename)
+        
+        if match:
+            # Group 1: Part before [tags]
+            # Group 2: The tags content inside []
+            # Group 3: Part after [tags] but before .md (if any)
+            # Group 4: The .md extension
             
-            if second_backtick_index != -1:
-                # Extract the tag string between backticks
-                tag_string = original_filename[first_backtick_index + 1 : second_backtick_index]
+            base_name_before_tags = match.group(1)
+            extracted_tag_string = match.group(2)
+            # part_after_tags_before_md = match.group(3) # Not used for cleaned filename or tags
+            
+            # Construct cleaned_filename: part before tags + .md extension
+            # This ensures "my_file[tag]suffix.md" becomes "my_file.md"
+            cleaned_filename = base_name_before_tags + ".md"
+
+            if extracted_tag_string:
                 # Split tag string by comma or space into a list of tags
-                tags = [t.strip() for t in tag_string.replace(',', ' ').split() if t.strip()]
-                
-                # --- CORE CHANGE FOR FILENAME CLEANING ---
-                # Clean the filename by taking only the part BEFORE the first backtick.
-                # This removes `content` and everything after it.
-                cleaned_filename = original_filename[:first_backtick_index]
-                # --- END CORE CHANGE ---
-                
-                if not tags: # Ensure tags is an empty list if no valid tags were extracted
-                    tags = []
-            else:
-                # Case: only one backtick found, meaning it's unmatched.
-                # As per requirement, treat it as no tags extracted and no cleaning done.
-                pass 
+                tags = [t.strip() for t in extracted_tag_string.replace(',', ' ').split() if t.strip()]
+            
+            if not tags: # Ensure tags is an empty list if no valid tags were extracted
+                tags = []
+        else:
+            # If no match (e.g., no [tags] found or not a .md file structure as expected)
+            # Then the filename remains original, and tags remain empty.
+            pass # cleaned_filename remains original_filename, tags remain empty list.
+        # --- END TAG EXTRACTION AND FILENAME CLEANING ---
         
         # --- DUPLICATE CHECK AND ITEM CREATION ---
-        # Create a new item dictionary for the final list
         new_item = {}
         new_item["1"] = cleaned_filename # Store the thoroughly cleaned filename
         new_item["3"] = tags # Store the extracted tags
@@ -95,48 +98,15 @@ def update_file_list_and_clean_filename_for_github_actions():
         final_file_list.append(new_item)
     
     # Sort the final list for consistent output (optional)
-    # Sorting by filename (value of key "1")
     final_file_list.sort(key=lambda x: x.get("1", ""))
 
     # Save back to list.json
     try:
         with open(list_json_path, 'w', encoding='utf-8') as f:
-            # ensure_ascii=False for proper display of Chinese characters
             json.dump(final_file_list, f, indent=4, ensure_ascii=False)
-        print(f"'{list_json_path}' updated successfully with thoroughly cleaned filenames.")
+        print(f"'{list_json_path}' updated successfully with cleaned filenames using brackets.")
     except IOError as e:
         print(f"Error writing to '{list_json_path}': {e}")
 
 if __name__ == "__main__":
-    update_file_list_and_clean_filename_for_github_actions()
-
-# import os
-# import json
-# from datetime import datetime
-
-# def update_file_list():
-#     # 获取 p/ 目录下的所有 .md 文件
-#     files = [f for f in os.listdir('p') if f.endswith('.md')]
-    
-#     # 获取当前时间戳
-#     timestamp = datetime.now().strftime('%Y-%m-%d')
-# #  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-#     # 读取现有的 list.json 文件
-#     if os.path.exists('list.json'):
-#         with open('list.json', 'r') as f:
-#             file_list = json.load(f)
-#     else:
-#         file_list = []
-
-#     # 更新文件列表
-#     for file in files:
-#         # 如果该文件还没有在 list.json 中，则添加
-#         if not any(f[0] == file for f in file_list):
-#             file_list.append([file, timestamp])
-
-#     # 保存回 list.json
-#     with open('list.json', 'w') as f:
-#         json.dump(file_list, f, indent=4)
-
-# if __name__ == "__main__":
-#     update_file_list()
+    update_file_list_and_clean_filename_with_brackets()
