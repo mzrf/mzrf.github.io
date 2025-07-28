@@ -47,25 +47,39 @@
 	fetch('list.json')
 	  .then(res => res.json())
 	  .then(list => {
+        // 确保 list 是一个数组
+        if (!Array.isArray(list)) {
+            console.error('Error: list.json content is not an array.');
+            return;
+        }
+
 	    // 对列表进行排序，确保最新的项目在末尾，以便slice(-3)正确获取。
 	    // 假设 '2' 字段是日期字符串，可以按字符串直接比较，或者转换为Date对象比较
+	    // 注意：如果您的 Python 脚本已经按日期倒序排序了，这一行可以移除
 	    list.sort((a, b) => a['2'].localeCompare(b['2'])); // 按日期升序排序
 
 	    const latest = list.slice(-3).reverse(); // 获取最新的3个并反转顺序
 
 	    const container = document.getElementById('latest');
-	    container.innerHTML = latest.map(item => {
-	      const name = item['1']; // 访问键 '1' 对应的文件名
-	      const date = item['2']; // 访问键 '2' 对应的日期
-	      // 如果需要显示标签，可以访问 item['3']
-	      // const tags = item['3'].join(', '); 
-	      return `<li><a href="blog.html?p=p/${encodeURIComponent(name)}"><span>${name}</span><i>${date}</i></a></li>`;
+        if (!container) {
+            console.error('Error: Element with ID "latest" not found.');
+            return;
+        }
+       container.innerHTML = latest.map(item => { // <-- 关键修改：这里不再使用数组解构
+            // 从对象中获取文件名和日期
+	        const name = item['1']; 
+	        const date = item['2'];
+            // 如果需要显示标签，可以访问 item['3']，例如：
+            // const tags = item['3'] && Array.isArray(item['3']) ? item['3'].map(tag => `#${tag}`).join(' ') : '';
+	        return `<li><a href="blog.html?p=p/${encodeURIComponent(name)}"><span>${name}</span><i>${date}</i></a></li>`;
 	    }).join('');
-	  })
+      })
 	  .catch(error => {
 	    console.error('Error fetching or parsing list.json:', error);
 	    const container = document.getElementById('latest');
-	    container.innerHTML = '<div>加载内容失败，请稍后再试。</div>';
+	    if (container) {
+            container.innerHTML = '<div>加载内容失败，请稍后再试。</div>';
+        }
 	  });
 </script>
 </html>
