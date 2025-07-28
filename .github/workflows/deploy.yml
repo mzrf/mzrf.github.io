@@ -1,59 +1,86 @@
-name: Deploy Blog
+name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - master  # 只在 master 分支发生变化时触发
-    paths:
-      - 'p/*'
-      - 'lib/update_list.py'
-      - 'index.html'
-      - 'list.json'  # 监控 list.json 文件变化
-permissions:
-  contents: write # 授予对仓库内容的写权限
-  
+      - master
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        repository: mzrf/mzrf.github.io
+        token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Set up Python environment
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
 
-      # 3. Install dependencies (if any)
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # pip install markdown # 如果您的脚本不直接处理Markdown内容，这行可以移除
-                                 # 根据当前脚本，不需要额外库
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # No other specific Python libraries are needed for this script
 
-      # 4. Run Python script to update list.json
-      - name: Run update_list.py
-        run: python lib/update_list.py
+    - name: Run Python script to update list.json (Regex for Tags)
+      run: python lib/update_list.py
 
-      # 5. Configure Git for actions
-      - name: Configure git
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+    # IMPORTANT: This step will now only rename the SINGLE most recently modified file
+    # matching the [tag]filename.md pattern, using the robust find | xargs ls -rt method.
+    - name: Rename the latest modified file in p/ matching [tag]filename.md
+      run: |
+        cd p/
+        
+        # Recommended Method 2: Use find for filtering and -print0 with xargs for robustness
+        # then ls -rt to find the latest among the matched files.
+        # This is more robust for filenames with spaces or special characters.
+        LATEST_FILE=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0 | xargs -0 ls -rt 2>/dev/null | tail -1)
+        
+        if [ -n "$LATEST_FILE" ]; then # Check if a file was found
+          # Remove leading "./" if find/ls outputs it
+          LATEST_FILE="${LATEST_FILE##./}"
 
-      # 6. Commit and push the changes (if any)
-      - name: Commit and push changes
-        run: |
-          git add list.json  # 添加 list.json 到暂存区
-          git commit -m "Update list.json via GitHub Actions" || echo "No changes to commit"  # 更改提交信息，并处理无更改情况
-          git push origin master  # 将更改推送到 master 分支
+          echo "Found latest modified file matching pattern: $LATEST_FILE"
+          
+          # Extract the part after the first ']'
+          new_name="${LATEST_FILE#*]}" 
+          
+          # Optional: remove any leading spaces that might exist after ']'
+          new_name="${new_name##*( )}" 
+          
+          if [ -n "$new_name" ] && [ "$LATEST_FILE" != "$new_name" ]; then
+            echo "Renaming '$LATEST_FILE' to '$new_name'"
+            mv "$LATEST_FILE" "$new_name"
+          else
+            echo "Skipping rename for '$LATEST_FILE': New name is empty or same as original, or pattern mismatch."
+          }
+        else
+          echo "No files found in p/ matching '[tag]*.md' pattern for renaming."
+        fi
+      working-directory: ${{ github.workspace }} # Ensure this step runs from the root of the repo
 
-      # 7. Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages  # 部署到 gh-pages 分支
-          folder: .  # 部署根目录
+    - name: Commit and Push list.json and renamed files
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        
+        git add list.json         # Add list.json to staging area
+        git add p/                # Add the p/ directory to staging area (to track renames)
+        
+        git diff-index --quiet HEAD || git commit -m "Update list.json and rename latest file via GitHub Actions (Robust ls -rt)"
+        
+        git push origin master    # Push changes to master branch
+
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages
+        folder: .
+        token: ${{ secrets.GITHUB_TOKEN }}
+        clean: true
+        force: true
+        attempt-limit: 3
