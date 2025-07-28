@@ -1,9 +1,9 @@
-import os
-import json
-from datetime import datetime
-import re # Import the regular expression module
+import os 
+import json 
+from datetime import datetime 
+import re # Import the regex module
 
-def update_file_list_simple_leading_brackets():
+def update_file_list_with_regex_for_tags(): 
     p_dir = 'p'
     list_json_path = 'list.json'
 
@@ -12,87 +12,109 @@ def update_file_list_simple_leading_brackets():
         print(f"Error: Directory '{p_dir}' not found. Please create it.")
         return
 
-    # Get all .md filenames in p/ (these are the original filenames)
-    original_md_filenames = {f for f in os.listdir(p_dir) if f.endswith('.md')}
-
-    # Get current timestamp for new files
-    timestamp = datetime.now().strftime('%Y-%m-%d')
-
-    # Read existing list.json or initialize an empty list
-    file_list_from_json = []
-    if os.path.exists(list_json_path):
-        try:
-            with open(list_json_path, 'r', encoding='utf-8') as f:
-                file_list_from_json = json.load(f)
-        except json.JSONDecodeError:
-            print(f"Warning: '{list_json_path}' is malformed. Initializing with empty list.")
-            file_list_from_json = []
-        except FileNotFoundError:
-            print(f"Warning: '{list_json_path}' not found, creating a new one.")
-            file_list_from_json = []
+    # Get all .md filenames in p/
+    files_in_p = {f for f in os.listdir(p_dir) if f.endswith('.md')}
     
-    # Convert existing file list to a dictionary for easy lookup by the *cleaned* filename.
+    # Get current timestamp for new files' default date
+    current_timestamp = datetime.now().strftime('%Y-%m-%d') 
+    
+    # Read existing list.json or initialize an empty list
+    existing_file_list = []
+    if os.path.exists(list_json_path): 
+        try:
+            with open(list_json_path, 'r', encoding='utf-8') as f: 
+                existing_file_list = json.load(f) 
+            if not isinstance(existing_file_list, list):
+                print(f"Warning: '{list_json_path}' content is not a list. Initializing with empty list.")
+                existing_file_list = []
+        except json.JSONDecodeError:
+            print(f"Warning: '{list_json_path}' is malformed or empty. Initializing with empty list.")
+            existing_file_list = []
+        except FileNotFoundError:
+            pass 
+
+    # Convert existing file list to a dictionary for quick lookup by cleaned filename
     existing_file_map = {}
-    for item in file_list_from_json:
+    for item in existing_file_list:
         if isinstance(item, dict) and "1" in item:
             existing_file_map[item["1"]] = item
 
     final_file_list = []
 
-    # Iterate through current original .md filenames from the 'p' directory
-    for original_filename in original_md_filenames:
-        
-        # Initialize tags and a cleaned filename
-        tags = []
-        cleaned_filename = original_filename # Default to original filename if no match
+    # Iterate through files in p/ directory
+    for original_filename in files_in_p:
+        cleaned_filename = original_filename
+        extracted_tags = []
+        file_date = current_timestamp # Default to current timestamp, will try to get modification time
 
-        # --- SIMPLIFIED TAG EXTRACTION AND FILENAME CLEANING ---
-        # Pattern: ^\[([^\]]+)\](.*)$
-        # This will match filenames starting with `[tag]` and capture the tag and the rest of the name.
-        # It assumes the `.md` extension is part of the second captured group.
-        # Example: "[tag1]1.RF基础.md" -> Group 1: "tag1", Group 2: "1.RF基础.md"
-        match = re.match(r'^\[([^\]]+)\](.*)$', original_filename)
+        # --- TAGS EXTRACTION WITH REGEX ---
+        # Match pattern: [tags_string]filename.md
+        # This regex specifically captures the content INSIDE the brackets for tag processing
+        tag_match = re.match(r'^\[([^\]]+)\](.*)$', original_filename)
         
-        if match:
-            extracted_tag_string = match.group(1) # e.g., "tag1"
-            remaining_filename = match.group(2)   # e.g., "1.RF基础.md"
+        if tag_match:
+            tag_string_raw = tag_match.group(1).strip() # Content inside brackets, e.g., "test1_tag test2_tag"
+            cleaned_filename = tag_match.group(2).strip() # Content after brackets, e.g., "1.test.md"
             
-            # Tags processing
-            tags = [t.strip() for t in extracted_tag_string.replace(',', ' ').split() if t.strip()]
-            if not tags: tags = [] 
-
-            # Cleaned filename is simply the remaining_filename
-            cleaned_filename = remaining_filename
+            # Now, process the tag_string_raw using regex for more flexible splitting
+            # Example: splitting by space, comma, or underscore if needed.
+            # For "test1_tag test2_tag", splitting by space is still appropriate.
+            # If tags could be "test1,test2", use r'[, ]+'
+            # If tags could be "test1_test2", use r'[ _]+'
+            # For your example "test1_tag test2_tag", splitting by spaces is fine.
+            extracted_tags = [tag.strip() for tag in re.split(r'\s+', tag_string_raw) if tag.strip()]
+            
+            # Ensure the cleaned_filename ends with .md if it's supposed to
+            if not cleaned_filename.endswith('.md'):
+                # This handles cases where the regex might capture too much or too little
+                # If your filenames consistently end with .md, this might not be strictly necessary
+                # but it's a good safeguard.
+                print(f"Warning: Cleaned filename '{cleaned_filename}' does not end with .md for '{original_filename}'. Appending .md.")
+                # cleaned_filename = cleaned_filename + '.md' # Only append if needed
         else:
-            # If the filename does NOT start with `[tag]`, then `cleaned_filename` remains
-            # `original_filename`, and `tags` remains an empty list.
-            pass
-        # --- END SIMPLIFIED TAG EXTRACTION AND FILENAME CLEANING ---
-        
-        # --- DUPLICATE CHECK AND ITEM CREATION ---
-        new_item = {}
-        new_item["1"] = cleaned_filename 
-        new_item["3"] = tags 
+            # If no [tags] prefix found, no tags are extracted, and filename remains original.
+            extracted_tags = [] # Ensure it's an empty list
+            cleaned_filename = original_filename # Keep the original filename
 
+        # --- DATE EXTRACTION (from file modification time) ---
+        try:
+            mod_timestamp = os.path.getmtime(os.path.join(p_dir, original_filename))
+            file_date = datetime.fromtimestamp(mod_timestamp).strftime('%Y-%m-%d')
+        except OSError:
+            print(f"Warning: Could not get modification date for '{original_filename}'. Using current date.")
+            # file_date is already set to current_timestamp as fallback
+
+        # Construct the item for list.json
+        new_item_data = {
+            "1": cleaned_filename,
+            "2": file_date,
+            "3": extracted_tags 
+        }
+
+        # Check if the cleaned_filename already exists in the old list.json
         if cleaned_filename in existing_file_map:
+            # If exists, update its tags and date
             existing_item = existing_file_map[cleaned_filename]
-            new_item["2"] = existing_item.get("2", timestamp) 
-            del existing_file_map[cleaned_filename]
-        else:
-            new_item["2"] = timestamp
+            
+            # For this version, we always update date and tags from latest processing
+            new_item_data["2"] = file_date 
+            new_item_data["3"] = extracted_tags 
+
+            # Remove from map to track processed files
+            del existing_file_map[cleaned_filename] 
         
-        final_file_list.append(new_item)
+        final_file_list.append(new_item_data)
     
-    # Sort the final list for consistent output (optional)
+    # Sort the final list by the '1' field (cleaned filename)
     final_file_list.sort(key=lambda x: x.get("1", ""))
 
-    # Save back to list.json
+    # Save back to list.json 
     try:
-        with open(list_json_path, 'w', encoding='utf-8') as f:
-            json.dump(final_file_list, f, indent=4, ensure_ascii=False)
-        print(f"'{list_json_path}' updated successfully (simple leading bracket logic).")
+        with open(list_json_path, 'w', encoding='utf-8') as f: 
+            json.dump(final_file_list, f, indent=4, ensure_ascii=False) 
+        print(f"'{list_json_path}' updated successfully using regex for tag extraction.")
     except IOError as e:
         print(f"Error writing to '{list_json_path}': {e}")
 
-if __name__ == "__main__":
-    update_file_list_simple_leading_brackets()
+if __name__ == "__main__": 
+    update_file_list_with_regex_for_tags()
