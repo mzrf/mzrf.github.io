@@ -7,8 +7,8 @@ def update_file_list():
     files = [f for f in os.listdir('p') if f.endswith('.md')]
     
     # 获取当前时间戳
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
+    timestamp = datetime.now().strftime('%Y-%m-%d')
+#  timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     # 读取现有的 list.json 文件
     if os.path.exists('list.json'):
         with open('list.json', 'r') as f:
