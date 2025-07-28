@@ -61,44 +61,94 @@ section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px so
 </body>
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
-  // 从 list.json 动态加载数据
-  fetch('list.json')
-    .then(response => response.json())
-    .then(listData => {
-      const tree = document.getElementById('tree'); // 获取树形目录的父容器
+    // 从 list.json 动态加载数据
+    fetch('list.json')
+        .then(response => response.json())
+        .then(listData => {
+            // 确保 listData 是一个数组
+            if (!Array.isArray(listData)) {
+                console.error('Error: list.json content is not an array.');
+                return;
+            }
 
-      // 生成 2025 文件夹节点
-      const yearNode = document.createElement('li');
-      yearNode.classList.add('folder', 'toggle','active');
-      yearNode.innerHTML = `📁 2025`;
+            const tree = document.getElementById('tree'); // 获取树形目录的父容器
+            if (!tree) {
+                console.error('Error: Container element with ID "tree" not found.');
+                return;
+            }
+            tree.innerHTML = ''; // 清空现有内容，以防重复加载
 
-      const nestedList = document.createElement('ul');
-      nestedList.classList.add('tree', 'nested');
+            // **Step 1: Group articles by year**
+            const groupedByYear = {};
+            listData.forEach(item => {
+                // Ensure each item is a valid object and contains required fields
+                if (typeof item !== 'object' || item === null || !item.hasOwnProperty('1') || !item.hasOwnProperty('2')) {
+                    console.warn('Skipping invalid list item entry:', item);
+                    return;
+                }
+                const year = new Date(item['2']).getFullYear();
+                if (!groupedByYear[year]) {
+                    groupedByYear[year] = [];
+                }
+                groupedByYear[year].push(item);
+            });
 
-      // 遍历 listData 创建文件项
-      listData.forEach(file => {
-        const fileNode = document.createElement('li');
-	const date = new Date(file[1]);
-	const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 格式化月份为两位数
-        const day = date.getDate().toString().padStart(2, '0'); // 格式化日期为两位数
-        const formattedDate = `${month}-${day}`; // 格式化日期为 MM-DD
-        //const formattedDate = `${date.getMonth() + 1}-${date.getDate()}`;
-        fileNode.innerHTML = `<a class="file"href="blog.html?p=p/${file[0]}"><span>${file[0]}</span> <i class="comment">${formattedDate}</i></a>`;
-        nestedList.appendChild(fileNode);
-      });
+            // **Step 2: Sort years in descending order (latest year first)**
+            const sortedYears = Object.keys(groupedByYear).sort((a, b) => b - a);
 
-      yearNode.appendChild(nestedList);
-      tree.appendChild(yearNode);
+            // **Step 3: Create and append year nodes and their nested lists**
+            sortedYears.forEach(year => {
+                const yearNode = document.createElement('li');
+                // By default, folders are collapsed. You can add 'active' to yearNode.classList if you want to expand all initially.
+                yearNode.classList.add('folder', 'toggle');
+                yearNode.innerHTML = `📁 ${year}`;
 
-      // 使文件夹可展开/收起
-      document.querySelectorAll('.toggle').forEach(folder => {
-        folder.addEventListener('click', function (e) {
-          e.stopPropagation();
-          this.classList.toggle('active');
+                const nestedList = document.createElement('ul');
+                nestedList.classList.add('tree', 'nested');
+                nestedList.style.display = 'none'; // Initially hide nested list
+
+                // **Step 4: Add click event for toggle functionality to each yearNode**
+                yearNode.addEventListener('click', function (event) {
+                    event.stopPropagation(); // Prevent event from bubbling up to parent folders if any
+                    this.classList.toggle('active'); // Toggle 'active' class for styling
+                    const childUl = this.querySelector('ul.nested');
+                    if (childUl) {
+                        childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none'; // Toggle display
+                    }
+                });
+
+                // **Step 5: Sort files within the current year by date in descending order**
+                // (Latest article first within each year's list)
+                const fileListForYear = groupedByYear[year].sort((a, b) => new Date(b['2']) - new Date(a['2']));
+
+                // **Step 6: Iterate through files for the current year and create file nodes**
+                fileListForYear.forEach(file => {
+                    const fileNode = document.createElement('li');
+                    const fileName = file['1']; // Access filename using key '1'
+                    const rawDate = file['2'];   // Access date string using key '2'
+                    const date = new Date(rawDate); // Convert to Date object
+
+                    // Format date to MM-DD
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const formattedDate = `${month}-${day}`;
+
+                    // Using encodeURIComponent for the filename in the URL to handle special characters
+                    fileNode.innerHTML = `<a class="file" href="blog.html?p=p/${encodeURIComponent(fileName)}"><span>${fileName}</span> <i class="comment">${formattedDate}</i></a>`;
+                    nestedList.appendChild(fileNode);
+                });
+
+                yearNode.appendChild(nestedList); // Append the nested file list to the year node
+                tree.appendChild(yearNode);       // Append the year node to the main tree container
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching or parsing list.json:', error);
+            const tree = document.getElementById('tree');
+            if (tree) {
+                tree.innerHTML = '<li>加载归档列表失败。</li>';
+            }
         });
-      });
-    })
-    .catch(error => console.error('Error loading list.json:', error));
 });
 
 </script>
