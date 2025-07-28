@@ -89,3 +89,8 @@ jobs:
         clean: true
         force: true
         attempt-limit: 3
+
+  call-jekyll-deploy:
+      uses: ./jekyll-gh-pages.yml@master # 引用本地的可复用工作流，@main 表示引用main分支的版本
+
+      
