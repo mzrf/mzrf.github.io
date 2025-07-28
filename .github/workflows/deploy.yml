@@ -29,27 +29,27 @@ jobs:
     - name: Run Python script to update list.json (Regex for Tags)
       run: python lib/update_list.py
 
-    # IMPORTANT: This step will now only rename the SINGLE most recently modified file
-    # matching the [tag]filename.md pattern, using the robust find | xargs ls -rt method.
+    # 重要：此步骤现在将仅重命名 p/ 目录中与 [tag]filename.md 模式匹配的最新修改的单个文件，
+    # 使用健壮的 find | xargs ls -rt 方法。
     - name: Rename the latest modified file in p/ matching [tag]filename.md
       run: |
         cd p/
         
-        # Recommended Method 2: Use find for filtering and -print0 with xargs for robustness
-        # then ls -rt to find the latest among the matched files.
-        # This is more robust for filenames with spaces or special characters.
+        # 推荐方法2：使用 find 进行过滤，并结合 -print0 和 xargs 提高鲁棒性，
+        # 然后使用 ls -rt 查找匹配文件中的最新文件。
+        # 这种方法对于文件名中包含空格或特殊字符的情况更为健壮。
         LATEST_FILE=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0 | xargs -0 ls -rt 2>/dev/null | tail -1)
         
-        if [ -n "$LATEST_FILE" ]; then # Check if a file was found
-          # Remove leading "./" if find/ls outputs it
+        if [ -n "$LATEST_FILE" ]; then # 检查是否找到了文件
+          # 如果 find/ls 输出带有 "./" 前缀，则移除它
           LATEST_FILE="${LATEST_FILE##./}"
 
           echo "Found latest modified file matching pattern: $LATEST_FILE"
           
-          # Extract the part after the first ']'
+          # 提取第一个 ']' 之后的部分
           new_name="${LATEST_FILE#*]}" 
           
-          # Optional: remove any leading spaces that might exist after ']'
+          # 可选：移除 ']' 之后可能存在的任何前导空格
           new_name="${new_name##*( )}" 
           
           if [ -n "$new_name" ] && [ "$LATEST_FILE" != "$new_name" ]; then
@@ -57,23 +57,23 @@ jobs:
             mv "$LATEST_FILE" "$new_name"
           else
             echo "Skipping rename for '$LATEST_FILE': New name is empty or same as original, or pattern mismatch."
-          }
+          fi # <-- 已修正：将 '}' 改为 'fi'
         else
           echo "No files found in p/ matching '[tag]*.md' pattern for renaming."
         fi
-      working-directory: ${{ github.workspace }} # Ensure this step runs from the root of the repo
+      working-directory: ${{ github.workspace }} # 确保此步骤在仓库的根目录运行
 
     - name: Commit and Push list.json and renamed files
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         
-        git add list.json         # Add list.json to staging area
-        git add p/                # Add the p/ directory to staging area (to track renames)
+        git add list.json         # 将 list.json 添加到暂存区
+        git add p/                # 将 p/ 目录添加到暂存区（以跟踪重命名）
         
         git diff-index --quiet HEAD || git commit -m "Update list.json and rename latest file via GitHub Actions (Robust ls -rt)"
         
-        git push origin master    # Push changes to master branch
+        git push origin master    # 推送更改到 master 分支
 
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4
