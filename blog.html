@@ -308,33 +308,64 @@
     new MarkdownRenderer();
 
     // 📌 加载 list.json 动态生成博客列表
+    // 📌 加载 list.json 动态生成博客列表
     fetch('list.json')
-        .then(response => response.json())
-        .then(listData => {
-            // 按时间倒序排序
-            listData.sort((a, b) => new Date(b[1]) - new Date(a[1]));
+    .then(response => response.json())
+    .then(listData => {
+        // 确保 listData 是一个数组，并且其元素是对象
+        if (!Array.isArray(listData)) {
+            console.error('list.json is not an array.');
+            return;
+        }
 
-            // 获取最新 10 条
-            const latestBlogs = listData.slice(0, 10);
-            const latestContainer = document.getElementById('right');
-            latestContainer.innerHTML = '';
-
-            latestBlogs.forEach(blog => {
-                const fileName = blog[0];
-                const date = new Date(blog[1]);
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const day = date.getDate().toString().padStart(2, '0');
-                const formattedDate = `${month}-${day}`;
-
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <a href="blog.html?p=p/${fileName}"><span>${fileName}</span><i class="date">${formattedDate}</i></a> 
-                `;
-                latestContainer.appendChild(listItem);
-            });
-        })
-        .catch(error => console.error('Error loading list.json:', error));
+        // 按时间倒序排序 (基于 '2' 字段的日期)
+        listData.sort((a, b) => {
+            // 确保每个 item 都有 '2' 字段，并且是字符串，避免因数据不规范导致错误
+            const dateA = a && typeof a['2'] === 'string' ? new Date(a['2']) : new Date(0); // 默认一个很早的日期
+            const dateB = b && typeof b['2'] === 'string' ? new Date(b['2']) : new Date(0); // 默认一个很早的日期
+            return dateB - dateA; // 降序排列 (最新在前)
         });
+
+        // 获取最新 10 条
+        const latestBlogs = listData.slice(0, 10);
+        const latestContainer = document.getElementById('right'); // 假设这是您要插入列表的容器
+        if (!latestContainer) {
+            console.error('Container element with ID "right" not found.');
+            return;
+        }
+        latestContainer.innerHTML = ''; // 清空现有内容
+
+        latestBlogs.forEach(blog => {
+            // 确保 blog 是一个对象并且包含 '1' 和 '2' 字段
+            if (typeof blog !== 'object' || blog === null || !blog.hasOwnProperty('1') || !blog.hasOwnProperty('2')) {
+                console.warn('Skipping invalid blog entry:', blog);
+                return;
+            }
+
+            const fileName = blog['1']; // 从对象的 '1' 键获取文件名
+            const date = new Date(blog['2']); // 从对象的 '2' 键获取日期
+
+            // 格式化日期为 MM-DD
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const formattedDate = `${month}-${day}`;
+
+            const listItem = document.createElement('li');
+            // 注意：encodeURIComponent(fileName) 对于 URL 参数是重要的，以防文件名包含特殊字符
+            listItem.innerHTML = `
+                <a href="blog.html?p=p/${encodeURIComponent(fileName)}"><span>${fileName}</span><i class="date">${formattedDate}</i></a>
+            `;
+            latestContainer.appendChild(listItem);
+        });
+    })
+    .catch(error => {
+        console.error('Error loading list.json:', error);
+        // 可以添加一个用户友好的错误消息到页面上
+        const latestContainer = document.getElementById('right');
+        if (latestContainer) {
+            latestContainer.innerHTML = '<li>加载博客列表失败。</li>';
+        }
+    });
 </script>
 </body>
 </html>
