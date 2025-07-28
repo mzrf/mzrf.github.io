@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import re # Import the regular expression module
 
-def update_file_list_and_clean_filename_with_brackets():
+def update_file_list_simple_leading_brackets():
     p_dir = 'p'
     list_json_path = 'list.json'
 
@@ -44,55 +44,41 @@ def update_file_list_and_clean_filename_with_brackets():
         
         # Initialize tags and a cleaned filename
         tags = []
-        cleaned_filename = original_filename # Start with original
+        cleaned_filename = original_filename # Default to original filename if no match
 
-        # --- TAG EXTRACTION AND FILENAME CLEANING USING REGEX ---
-        # Regex pattern to find [tags] in the filename, then capture the part before it.
-        # It also handles .md extension potentially being before the tags.
-        match = re.search(r'^(.*?)(?:\[([^\]]+)\])?(.*?)(\.md)$', original_filename)
+        # --- SIMPLIFIED TAG EXTRACTION AND FILENAME CLEANING ---
+        # Pattern: ^\[([^\]]+)\](.*)$
+        # This will match filenames starting with `[tag]` and capture the tag and the rest of the name.
+        # It assumes the `.md` extension is part of the second captured group.
+        # Example: "[tag1]1.RF基础.md" -> Group 1: "tag1", Group 2: "1.RF基础.md"
+        match = re.match(r'^\[([^\]]+)\](.*)$', original_filename)
         
         if match:
-            # Group 1: Part before [tags]
-            # Group 2: The tags content inside []
-            # Group 3: Part after [tags] but before .md (if any)
-            # Group 4: The .md extension
+            extracted_tag_string = match.group(1) # e.g., "tag1"
+            remaining_filename = match.group(2)   # e.g., "1.RF基础.md"
             
-            base_name_before_tags = match.group(1)
-            extracted_tag_string = match.group(2)
-            # part_after_tags_before_md = match.group(3) # Not used for cleaned filename or tags
-            
-            # Construct cleaned_filename: part before tags + .md extension
-            # This ensures "my_file[tag]suffix.md" becomes "my_file.md"
-            cleaned_filename = base_name_before_tags + ".md"
+            # Tags processing
+            tags = [t.strip() for t in extracted_tag_string.replace(',', ' ').split() if t.strip()]
+            if not tags: tags = [] 
 
-            if extracted_tag_string:
-                # Split tag string by comma or space into a list of tags
-                tags = [t.strip() for t in extracted_tag_string.replace(',', ' ').split() if t.strip()]
-            
-            if not tags: # Ensure tags is an empty list if no valid tags were extracted
-                tags = []
+            # Cleaned filename is simply the remaining_filename
+            cleaned_filename = remaining_filename
         else:
-            # If no match (e.g., no [tags] found or not a .md file structure as expected)
-            # Then the filename remains original, and tags remain empty.
-            pass # cleaned_filename remains original_filename, tags remain empty list.
-        # --- END TAG EXTRACTION AND FILENAME CLEANING ---
+            # If the filename does NOT start with `[tag]`, then `cleaned_filename` remains
+            # `original_filename`, and `tags` remains an empty list.
+            pass
+        # --- END SIMPLIFIED TAG EXTRACTION AND FILENAME CLEANING ---
         
         # --- DUPLICATE CHECK AND ITEM CREATION ---
         new_item = {}
-        new_item["1"] = cleaned_filename # Store the thoroughly cleaned filename
-        new_item["3"] = tags # Store the extracted tags
+        new_item["1"] = cleaned_filename 
+        new_item["3"] = tags 
 
         if cleaned_filename in existing_file_map:
-            # If the cleaned file already exists in our map:
-            # 1. Update its tags.
-            # 2. Preserve its original creation date.
             existing_item = existing_file_map[cleaned_filename]
-            new_item["2"] = existing_item.get("2", timestamp) # Preserve old date, or use current if missing
-            
-            # Remove from map to track deleted files from original list.
+            new_item["2"] = existing_item.get("2", timestamp) 
             del existing_file_map[cleaned_filename]
         else:
-            # If it's a new (cleaned) file not previously in list.json, add current timestamp.
             new_item["2"] = timestamp
         
         final_file_list.append(new_item)
@@ -104,9 +90,9 @@ def update_file_list_and_clean_filename_with_brackets():
     try:
         with open(list_json_path, 'w', encoding='utf-8') as f:
             json.dump(final_file_list, f, indent=4, ensure_ascii=False)
-        print(f"'{list_json_path}' updated successfully with cleaned filenames using brackets.")
+        print(f"'{list_json_path}' updated successfully (simple leading bracket logic).")
     except IOError as e:
         print(f"Error writing to '{list_json_path}': {e}")
 
 if __name__ == "__main__":
-    update_file_list_and_clean_filename_with_brackets()
+    update_file_list_simple_leading_brackets()
