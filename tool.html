@@ -1,77 +1,154 @@
+
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Markdown 图片链接转 Base64</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: sans-serif; padding: 1rem; max-width: 960px; margin: auto; }
-    textarea { width: 100%; height: 300px; margin-bottom: 1rem; font-family: monospace; }
-    button { padding: 0.5rem 1rem; font-size: 1rem; }
-    #output { white-space: pre-wrap; background: #f7f7f7; padding: 1rem; border: 1px solid #ddd; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Image to Base64 Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        textarea {
+            width: 100%;
+            min-height: 400px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            box-sizing: border-box; /* Include padding in the element's total width and height */
+        }
+        .panel {
+            flex: 1;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        #outputMarkdown {
+            background-color: #e9ecef;
+            white-space: pre-wrap; /* Preserves whitespace and wraps text */
+            word-wrap: break-word; /* Breaks long words */
+        }
+    </style>
 </head>
 <body>
-  <h2>Markdown 图片链接转 Base64 工具</h2>
-  <p>在下方输入 Markdown 文本（包含图片链接），点击“转换”，将自动替换为 base64 格式的图片，并在文末附上变量。</p>
-  <textarea id="input" placeholder="粘贴含有 ![](http...) 的 Markdown 内容"></textarea>
-  <br>
-  <button onclick="convertImages()">转换为 Base64</button>
-  <h3>输出结果：</h3>
-  <div id="output"></div>
+    <h1>Markdown Image to Base64 Converter</h1>
+    <div class="container">
+        <div class="panel">
+            <h2>Input Markdown</h2>
+            <textarea id="inputMarkdown" placeholder="Paste your Markdown text here with image links (e.g., ![alt text](http://example.com/image.png) or <img src='http://example.com/image.jpg'>)"></textarea>
+            <button onclick="convertImagesToBase64()">Convert Images</button>
+        </div>
+        <div class="panel">
+            <h2>Output Markdown (with Base64 Images)</h2>
+            <textarea id="outputMarkdown" readonly></textarea>
+        </div>
+    </div>
 
-  <script>
-    async function fetchImageAsBase64(url) {
-      try {
-        const res = await fetch(url, { mode: 'cors' });
-        const blob = await res.blob();
-        return await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) {
-        console.warn('无法加载:', url);
-        return null; // 表示失败
-      }
-    }
+    <script>
+        async function convertImagesToBase64() {
+            const inputMarkdown = document.getElementById('inputMarkdown').value;
+            let outputMarkdown = inputMarkdown;
 
-    async function convertImages() {
-      const input = document.getElementById('input').value;
-      const outputEl = document.getElementById('output');
+            // Regular expressions to find image URLs
+            // 1. Markdown image syntax: ![alt text](url)
+            const markdownImgRegex = /!\[.*?\]\((https?:\/\/[^\s)]+\.(png|jpg|jpeg|gif|webp|svg))\)/g;
+            // 2. HTML <img> tags: <img src="url"> or <img src='url'>
+            const htmlImgRegex = /<img\s+(?:[^>]*?\s+)?src=["'](https?:\/\/[^"']+\.(png|jpg|jpeg|gif|webp|svg))["']/g;
 
-      const imgRegex = /!\[(.*?)\]\((https?:[^\)]+)\)/g;
-      let match;
-      let converted = input;
-      let base64Vars = [];
-      let index = 0;
+            const imageUrls = [];
 
-      const tasks = [];
-      while ((match = imgRegex.exec(input)) !== null) {
-        const [full, alt, url] = match;
-        const varName = `img_base64_${index++}`;
-
-        tasks.push(
-          fetchImageAsBase64(url).then(base64 => {
-            if (base64) {
-              base64Vars.push(`const ${varName} = "${base64}"; // 原图：${url}`);
-              const replacement = `![${alt}](\${${varName}})`;
-              converted = converted.replace(full, replacement);
+            // Find all Markdown image URLs
+            let match;
+            while ((match = markdownImgRegex.exec(inputMarkdown)) !== null) {
+                imageUrls.push({ url: match[1], type: 'markdown', fullMatch: match[0] });
             }
-          })
-        );
-      }
 
-      await Promise.all(tasks);
+            // Find all HTML <img> tag URLs
+            while ((match = htmlImgRegex.exec(inputMarkdown)) !== null) {
+                imageUrls.push({ url: match[1], type: 'html', fullMatch: match[0] });
+            }
 
-      if (base64Vars.length > 0) {
-        converted += "\n\n---\n\n<script>\n" + base64Vars.join("\n") + "\n</script>";
-      }
+            const conversions = imageUrls.map(async (imgInfo) => {
+                try {
+                    const base64Data = await getImageBase64(imgInfo.url);
+                    if (base64Data) {
+                        if (imgInfo.type === 'markdown') {
+                            // Replace Markdown image syntax
+                            const newSyntax = imgInfo.fullMatch.replace(imgInfo.url, base64Data);
+                            outputMarkdown = outputMarkdown.replace(imgInfo.fullMatch, newSyntax);
+                        } else if (imgInfo.type === 'html') {
+                            // Replace HTML <img> tag
+                            const newSyntax = imgInfo.fullMatch.replace(imgInfo.url, base64Data);
+                            outputMarkdown = outputMarkdown.replace(imgInfo.fullMatch, newSyntax);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Failed to convert ${imgInfo.url}:`, error);
+                    // Optionally, you can leave the original URL if conversion fails
+                }
+            });
 
-      outputEl.textContent = converted;
-    }
-  window.convertImages = convertImages;
-  </script>
+            await Promise.all(conversions);
+            document.getElementById('outputMarkdown').value = outputMarkdown;
+        }
+
+        async function getImageBase64(url) {
+            try {
+                // Fetch the image as a blob
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const blob = await response.blob();
+
+                // Determine content type for the data URL
+                const contentType = blob.type;
+
+                // Read the blob as a Data URL
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        resolve(reader.result); // This is the Base64 data URL
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error(`Error fetching or converting ${url}:`, error);
+                return null; // Return null if conversion fails
+            }
+        }
+    </script>
 </body>
 </html>
