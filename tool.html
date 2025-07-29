@@ -13,7 +13,7 @@
 </head>
 <body>
   <h2>Markdown 图片链接转 Base64 工具</h2>
-  <p>在下方输入 Markdown 文本（包含图片链接），点击“转换”，将自动替换为 base64 格式的图片嵌入。</p>
+  <p>在下方输入 Markdown 文本（包含图片链接），点击“转换”，将自动替换为 base64 格式的图片，并在文末附上变量。</p>
   <textarea id="input" placeholder="粘贴含有 ![](http...) 的 Markdown 内容"></textarea>
   <br>
   <button onclick="convertImages()">转换为 Base64</button>
@@ -33,7 +33,7 @@
         });
       } catch (e) {
         console.warn('无法加载:', url);
-        return url; // 回退原始链接
+        return null; // 表示失败
       }
     }
 
@@ -44,19 +44,31 @@
       const imgRegex = /!\[(.*?)\]\((https?:[^\)]+)\)/g;
       let match;
       let converted = input;
+      let base64Vars = [];
+      let index = 0;
 
       const tasks = [];
       while ((match = imgRegex.exec(input)) !== null) {
         const [full, alt, url] = match;
+        const varName = `img_base64_${index++}`;
+
         tasks.push(
           fetchImageAsBase64(url).then(base64 => {
-            const replacement = `![${alt}](${base64})`;
-            converted = converted.replace(full, replacement);
+            if (base64) {
+              base64Vars.push(`const ${varName} = "${base64}"; // 原图：${url}`);
+              const replacement = `![${alt}](\${${varName}})`;
+              converted = converted.replace(full, replacement);
+            }
           })
         );
       }
 
       await Promise.all(tasks);
+
+      if (base64Vars.length > 0) {
+        converted += "\n\n---\n\n<script>\n" + base64Vars.join("\n") + "\n</script>";
+      }
+
       outputEl.textContent = converted;
     }
   </script>
