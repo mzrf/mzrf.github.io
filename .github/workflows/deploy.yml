@@ -30,13 +30,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         # No other specific Python libraries are needed for this script
-
     - name: Run Python script to update list.json (Regex for Tags)
       run: python lib/update_list.py
 
     # 重要：此步骤现在将仅重命名 p/ 目录中与 [tag]filename.md 模式匹配的最新修改的单个文件，
     # 使用健壮的 find | xargs ls -rt 方法。
-        - name: Rename the latest modified file in p/ matching [tag]filename.md
+    - name: Rename the latest modified file in p/ matching [tag]filename.md
       run: |
         cd p/ || { echo "Directory p/ not found"; exit 1; }
 
