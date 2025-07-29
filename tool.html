@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Convert IMG to Base64</title>
+</head>
+<body>
+  <!-- 这是你的 HTML 内容 -->
+  <!-- … -->
+  <script>
+    async function imgToBase64(img) {
+      return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const image = new Image();
+        image.crossOrigin = 'Anonymous'; // 为了遵守 CORS
+        image.src = img.src;
+        image.onload = () => {
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          ctx.drawImage(image, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          resolve(dataUrl);
+        };
+        image.onerror = (err) => reject(err);
+      });
+    }
+
+    async function convertAllImages() {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      for (const img of imgs) {
+        try {
+          const base64 = await imgToBase64(img);
+          img.setAttribute('data-orig-src', img.src);
+          img.src = base64;
+          console.log('已转换:', img);
+        } catch (err) {
+          console.error('转换失败:', img.src, err);
+        }
+      }
+      console.log('所有图像处理完成');
+    }
+
+    window.addEventListener('load', () => {
+      convertAllImages();
+    });
+  </script>
+</body>
+</html>
