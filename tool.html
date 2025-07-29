@@ -2,48 +2,63 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>Convert IMG to Base64</title>
+  <title>Markdown 图片链接转 Base64</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 960px; margin: auto; }
+    textarea { width: 100%; height: 300px; margin-bottom: 1rem; font-family: monospace; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; }
+    #output { white-space: pre-wrap; background: #f7f7f7; padding: 1rem; border: 1px solid #ddd; }
+  </style>
 </head>
 <body>
-  <!-- 这是你的 HTML 内容 -->
-  <!-- … -->
+  <h2>Markdown 图片链接转 Base64 工具</h2>
+  <p>在下方输入 Markdown 文本（包含图片链接），点击“转换”，将自动替换为 base64 格式的图片嵌入。</p>
+  <textarea id="input" placeholder="粘贴含有 ![](http...) 的 Markdown 内容"></textarea>
+  <br>
+  <button onclick="convertImages()">转换为 Base64</button>
+  <h3>输出结果：</h3>
+  <div id="output"></div>
+
   <script>
-    async function imgToBase64(img) {
-      return new Promise((resolve, reject) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const image = new Image();
-        image.crossOrigin = 'Anonymous'; // 为了遵守 CORS
-        image.src = img.src;
-        image.onload = () => {
-          canvas.width = image.naturalWidth;
-          canvas.height = image.naturalHeight;
-          ctx.drawImage(image, 0, 0);
-          const dataUrl = canvas.toDataURL('image/png');
-          resolve(dataUrl);
-        };
-        image.onerror = (err) => reject(err);
-      });
-    }
-
-    async function convertAllImages() {
-      const imgs = Array.from(document.querySelectorAll('img'));
-      for (const img of imgs) {
-        try {
-          const base64 = await imgToBase64(img);
-          img.setAttribute('data-orig-src', img.src);
-          img.src = base64;
-          console.log('已转换:', img);
-        } catch (err) {
-          console.error('转换失败:', img.src, err);
-        }
+    async function fetchImageAsBase64(url) {
+      try {
+        const res = await fetch(url, { mode: 'cors' });
+        const blob = await res.blob();
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.warn('无法加载:', url);
+        return url; // 回退原始链接
       }
-      console.log('所有图像处理完成');
     }
 
-    window.addEventListener('load', () => {
-      convertAllImages();
-    });
+    async function convertImages() {
+      const input = document.getElementById('input').value;
+      const outputEl = document.getElementById('output');
+
+      const imgRegex = /!\[(.*?)\]\((https?:[^\)]+)\)/g;
+      let match;
+      let converted = input;
+
+      const tasks = [];
+      while ((match = imgRegex.exec(input)) !== null) {
+        const [full, alt, url] = match;
+        tasks.push(
+          fetchImageAsBase64(url).then(base64 => {
+            const replacement = `![${alt}](${base64})`;
+            converted = converted.replace(full, replacement);
+          })
+        );
+      }
+
+      await Promise.all(tasks);
+      outputEl.textContent = converted;
+    }
   </script>
 </body>
 </html>
