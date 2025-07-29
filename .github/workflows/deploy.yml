@@ -36,35 +36,37 @@ jobs:
 
     # 重要：此步骤现在将仅重命名 p/ 目录中与 [tag]filename.md 模式匹配的最新修改的单个文件，
     # 使用健壮的 find | xargs ls -rt 方法。
-    - name: Rename the latest modified file in p/ matching [tag]filename.md
+        - name: Rename the latest modified file in p/ matching [tag]filename.md
       run: |
-        cd p/
-        
-        # 推荐方法2：使用 find 进行过滤，并结合 -print0 和 xargs 提高鲁棒性，
-        # 然后使用 ls -rt 查找匹配文件中的最新文件。
-        # 这种方法对于文件名中包含空格或特殊字符的情况更为健壮。
-        LATEST_FILE=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0 | xargs -0 ls -rt 2>/dev/null | tail -1)
-        
-        if [ -n "$LATEST_FILE" ]; then # 检查是否找到了文件
-          # 如果 find/ls 输出带有 "./" 前缀，则移除它
-          LATEST_FILE="${LATEST_FILE##./}"
+        cd p/ || { echo "Directory p/ not found"; exit 1; }
 
-          echo "Found latest modified file matching pattern: $LATEST_FILE"
-          
-          # 提取第一个 ']' 之后的部分
-          new_name="${LATEST_FILE#*]}" 
-          
-          # 可选：移除 ']' 之后可能存在的任何前导空格
-          new_name="${new_name##*( )}" 
-          
-          if [ -n "$new_name" ] && [ "$LATEST_FILE" != "$new_name" ]; then
-            echo "Renaming '$LATEST_FILE' to '$new_name'"
-            mv "$LATEST_FILE" "$new_name"
-          else
-            echo "Skipping rename for '$LATEST_FILE': New name is empty or same as original, or pattern mismatch."
-          fi # <-- 已修正：将 '}' 改为 'fi'
+        echo "📄 Listing all *.md files in p/:"
+        ls -l *.md || echo "⚠️ No markdown files found."
+
+        echo "🔍 Searching for files matching pattern: [tag]*.md"
+        MATCHING_FILES=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0)
+        
+        if [ -z "$MATCHING_FILES" ]; then
+          echo "❌ No matching files found in p/"
+          exit 0
+        fi
+
+        # 获取最新修改的匹配文件
+        LATEST_FILE=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0 | xargs -0 ls -rt 2>/dev/null | tail -1)
+
+        echo "✅ Found latest matching file: $LATEST_FILE"
+
+        # 移除前缀 "./"
+        LATEST_FILE="${LATEST_FILE##./}"
+
+        new_name="${LATEST_FILE#*]}"
+        new_name="${new_name##*( )}"  # 移除可能的空格
+
+        if [ -n "$new_name" ] && [ "$LATEST_FILE" != "$new_name" ]; then
+          echo "🔁 Renaming '$LATEST_FILE' → '$new_name'"
+          mv "$LATEST_FILE" "$new_name"
         else
-          echo "No files found in p/ matching '[tag]*.md' pattern for renaming."
+          echo "⚠️ Rename skipped: Target name is empty or unchanged."
         fi
       working-directory: ${{ github.workspace }} # 确保此步骤在仓库的根目录运行
 
