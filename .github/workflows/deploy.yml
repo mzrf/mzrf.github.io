@@ -1,12 +1,11 @@
-name: Update list and deploy
+name: Update list.json and deploy
 
 on:
   push:
+    branches: [ master ]
     paths:
       - 'p/**'
-      - '.github/workflows/update-list-and-deploy.yml'
-    branches:
-      - master
+      - '.github/workflows/update-and-deploy.yml'
 
 permissions:
   contents: write
@@ -18,86 +17,88 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Detect latest uploaded file
-        id: detect
-        run: |
-          FILE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^p/\[' | tail -n 1)
-          if [ -z "$FILE" ]; then
-            echo "❌ No new tagged file found."
-            exit 1
-          fi
+    - name: Detect new uploaded file
+      id: detect
+      run: |
+        # 查找最新添加的 p/ 目录文件，名称包含 [
+        FILE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^p/\[' | tail -n 1)
+        if [ -z "$FILE" ]; then
+          echo "No new tagged file detected"
+          exit 1
+        fi
 
-          BASENAME=$(basename "$FILE")
-          TAGS_RAW=$(echo "$BASENAME" | sed -n 's/^\[\(.*\)\].*/\1/p')
-          FILENAME=$(echo "$BASENAME" | sed -n 's/^\[[^\]]*\]\(.*\)/\1/p')
+        echo "Detected file: $FILE"
 
-          echo "Detected file: $FILE"
-          echo "Raw tags: $TAGS_RAW"
-          echo "Clean name: $FILENAME"
+        BASENAME=$(basename "$FILE")
+        TAGS_RAW=$(echo "$BASENAME" | sed -n 's/^\[\(.*\)\].*/\1/p')
+        NEWNAME=$(echo "$BASENAME" | sed -n 's/^\[[^]]*\]\(.*\)/\1/p')
 
-          # Rename file
-          mv "$FILE" "p/$FILENAME"
+        echo "TAGS_RAW=$TAGS_RAW" >> $GITHUB_ENV
+        echo "NEWNAME=$NEWNAME" >> $GITHUB_ENV
+        echo "OLDPATH=$FILE" >> $GITHUB_ENV
+        echo "NEWPATH=p/$NEWNAME" >> $GITHUB_ENV
 
-          echo "name=$FILENAME" >> $GITHUB_OUTPUT
-          echo "tags=$TAGS_RAW" >> $GITHUB_OUTPUT
+        echo "📝 Parsed tags: $TAGS_RAW"
+        echo "📝 Cleaned file name: $NEWNAME"
 
-      - name: Update list.json
-        run: |
-          FILE="p/${{ steps.detect.outputs.name }}"
-          RAW_TAGS="${{ steps.detect.outputs.tags }}"
-          NAME="${{ steps.detect.outputs.name }}"
-          DATE=$(date -u +"%Y-%m-%d")
+    - name: Rename file
+      run: |
+        if [ "$OLDPATH" != "$NEWPATH" ]; then
+          # 若新文件已存在，覆盖它
+          mv -f "$OLDPATH" "$NEWPATH"
+        fi
 
-          # Split tags
-          IFS=$'\n' read -rd '' -a TAG_ARRAY <<< "$(echo "$RAW_TAGS" | tr ',; ' '\n' | sed '/^$/d')"
-          TAGS_JSON=$(printf '%s\n' "${TAG_ARRAY[@]}" | jq -R . | jq -s .)
+    - name: Update list.json
+      run: |
+        DATE=$(date -u +%Y-%m-%d)
 
-          echo "Parsed tags: $TAGS_JSON"
+        # 分隔 tags 并转为 JSON 数组
+        TAGS_JSON=$(echo "$TAGS_RAW" | tr ',; ' '\n' | sed '/^$/d' | jq -R . | jq -s .)
 
-          if [ ! -f list.json ]; then
-            echo "[]" > list.json
-          fi
+        # 确保 list.json 存在
+        [ -f list.json ] || echo "[]" > list.json
 
-          exists=$(jq --arg name "$NAME" 'map(select(."1" == $name)) | length' list.json)
+        # 是否已存在该文件
+        EXIST=$(jq --arg name "$NEWNAME" 'map(select(."1" == $name)) | length' list.json)
 
-          if [ "$exists" -gt 0 ]; then
-            echo "✅ Existing file — updating"
-            jq --arg name "$NAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
-              map(
-                if ."1" == $name then
-                  ."2" = $date |
-                  ."3" = ((.["3"] + $tags) | unique)
-                else .
-                end
-              )
-            ' list.json > list.tmp.json
-          else
-            echo "➕ New file — adding"
-            jq --arg name "$NAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
-              . + [{"1": $name, "2": $date, "3": $tags}]
-            ' list.json > list.tmp.json
-          fi
+        if [ "$EXIST" -gt 0 ]; then
+          echo "✅ 更新已有文件条目"
+          jq --arg name "$NEWNAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
+            map(
+              if ."1" == $name then
+                ."2" = $date |
+                ."3" = ((."3" + $tags) | unique)
+              else .
+              end
+            )
+          ' list.json > list.tmp.json
+        else
+          echo "➕ 新增文件条目"
+          jq --arg name "$NEWNAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
+            . + [{"1": $name, "2": $date, "3": $tags}]
+          ' list.json > list.tmp.json
+        fi
 
-          mv list.tmp.json list.json
+        mv list.tmp.json list.json
 
-      - name: Commit and push changes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add list.json p
-          git commit -m "📄 update list.json for ${{ steps.detect.outputs.name }}"
-          git push
+    - name: Commit and push list.json
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add list.json p
+        git commit -m "📄 Update list.json: $NEWNAME"
+        git push
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+    - name: Setup GitHub Pages
+      uses: actions/configure-pages@v4
 
-      - name: Upload site content
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
+    - name: Upload site
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: .
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+    - name: Deploy to GitHub Pages
+      uses: actions/deploy-pages@v4
