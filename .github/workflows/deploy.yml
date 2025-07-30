@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Detect latest uploaded file
         id: detect
@@ -38,7 +38,7 @@ jobs:
           echo "Raw tags: $TAGS_RAW"
           echo "Clean name: $FILENAME"
 
-          # 重命名文件
+          # Rename file
           mv "$FILE" "p/$FILENAME"
 
           echo "name=$FILENAME" >> $GITHUB_OUTPUT
@@ -51,7 +51,7 @@ jobs:
           NAME="${{ steps.detect.outputs.name }}"
           DATE=$(date -u +"%Y-%m-%d")
 
-          # 解析标签，支持 , ; 空格 分隔
+          # Split tags
           IFS=$'\n' read -rd '' -a TAG_ARRAY <<< "$(echo "$RAW_TAGS" | tr ',; ' '\n' | sed '/^$/d')"
           TAGS_JSON=$(printf '%s\n' "${TAG_ARRAY[@]}" | jq -R . | jq -s .)
 
@@ -92,12 +92,12 @@ jobs:
           git push
 
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
 
       - name: Upload site content
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
