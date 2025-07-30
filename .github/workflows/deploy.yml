@@ -19,12 +19,12 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Detect newly added p/*.md files
+      - name: Get newly added Markdown files
         id: detect_new
         run: |
-          echo "NEW_FILES=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | awk '$1 == "A" && $2 ~ /^p\/.*\.md$/ { print $2 }' | paste -sd ";" -)" >> $GITHUB_ENV
+          echo "NEW_FILES=$(jq -r '.head_commit.added[]' "$GITHUB_EVENT_PATH" | grep '^p/.*\.md$' | paste -sd ";" -)" >> $GITHUB_ENV
 
-      - name: Run Python script to update list
+      - name: Run Python script to update list.json and rename
         if: env.NEW_FILES != ''
         run: |
           IFS=';' read -ra FILES <<< "$NEW_FILES"
@@ -38,7 +38,7 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add list.json p/
-          git commit -m "Updated list.json and renamed files" || echo "No changes to commit"
+          git commit -m "Update list.json and rename new files" || echo "No changes to commit"
           git push
 
       - name: Deploy to GitHub Pages
