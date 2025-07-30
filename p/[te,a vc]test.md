@@ -2,21 +2,7 @@
 # Welcome to StackEdit!
 
 H This will allow you to fetch your workspace on any other device.
-	> To start syncing your workspace, just sign in with Google in the menu.
-
-- The file synchronization will keep one file of the workspace synced with one or multiple files in **Google Drive**, **Dropbox** or **GitHub**.
-	> Before starting to sync files, you must link an account in the **Synchronize** sub-menu.
-
-## Open a file
-
-You can open a file from **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Open from**. Once opened in the workspace, any modification in the file will be automatically synced.
-
-## Save a file
-
-You can save any file of the workspace to **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Save on**. Even if a file in the workspace is already synced, you can save it to another location. StackEdit can sync one file with multiple locations and accounts.
-
-## Synchronize a file
-
+	> To start syncing your workspace, just sign in with Google in the m
 Once your file is linked to a synchronized location, StackEdit will periodically synchronize it by downloading/uploading any modification. A merge will be performed if necessary and conflicts will be resolved.
 
 If you just have modified your file and you want to force syncing, click the **Synchronize now** button in the navigation bar.
@@ -112,5 +98,6 @@ C --> D
 > Blockquote
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE1NjUwMDgwMjgsLTMwNTM0NTIyOV19
+eyJoaXN0b3J5IjpbLTkyNTc3MDc1OCwtMTU2NTAwODAyOCwtMz
+A1MzQ1MjI5XX0=
 -->
