@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
       - name: 🐍 Setup Python
@@ -19,35 +19,33 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: 🔍 Detect Newly Added Markdown Files
-        id: detect_new
+      - name: 🔍 Detect added and modified Markdown files
+        id: detect_files
         run: |
-          echo "🌟 事件路径: $GITHUB_EVENT_PATH"
-          echo "NEW_FILES=$(jq -r '.head_commit.added[]' "$GITHUB_EVENT_PATH" | grep '^p/.*\.md$' | paste -sd ";" -)" >> $GITHUB_ENV
+          echo "Event Path: $GITHUB_EVENT_PATH"
+          jq '.' "$GITHUB_EVENT_PATH"
+          FILES=$(jq -r '[.head_commit.added[], .head_commit.modified[]] | .[]' "$GITHUB_EVENT_PATH" | grep '^p/.*\.md$' || true)
+          echo "Detected Files:"
+          echo "$FILES"
+          echo "ALL_FILES=$(echo "$FILES" | paste -sd ';' -)" >> $GITHUB_ENV
 
-      - name: 🧠 Run Python Script to Update list.json and Rename
-        if: env.NEW_FILES != ''
+      - name: 🛠️ Run Python script for each file
+        if: env.ALL_FILES != ''
         run: |
-          set -x  # 打印每条 shell 命令
-          echo "📂 NEW_FILES: $NEW_FILES"
-          IFS=';' read -ra FILES <<< "$NEW_FILES"
+          IFS=';' read -ra FILES <<< "$ALL_FILES"
           for file in "${FILES[@]}"; do
-            echo "🚀 处理文件: $file"
+            echo "➡️ Processing file: $file"
             python3 lib/update_list.py "$file"
           done
 
-      - name: ✅ Commit Changes
+      - name: 💾 Commit and Push Changes
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add list.json p/
-          git commit -m "Update list.json and rename new files" || echo "🟡 No changes to commit"
+          git status
+          git commit -m "🤖 Update list.json and renamed new files" || echo "No changes to commit"
           git push
-
-      - name: 📄 Show list.json Preview
-        run: |
-          echo "🧾 list.json 前 20 行预览:"
-          head -n 20 list.json
 
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
