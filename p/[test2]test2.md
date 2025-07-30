@@ -3,10 +3,7 @@
 
 H This will allow you to fetch your workspace on any other device.
 	> To start syncing your workspace, just sign in with Google in the m
-Once your file is linked to a synchronized location, StackEdit will periodically synchronize it by downloading/uploading any modification. A merge will be performed if necessary and conflicts will be resolved.
-
-If you just have modified your file and you want to force syncing, click the **Synchronize now** button in the navigation bar.
-
+Once yo
 > **Note:** The **Synchronize now** button is disabled if you have no file to synchronize.
 
 ## Manage file synchronization
@@ -98,5 +95,5 @@ C --> D
 > Blockquote
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTkyNTc3MDc1OF19
+eyJoaXN0b3J5IjpbMzU0NDI0ODE2LC05MjU3NzA3NThdfQ==
 -->
