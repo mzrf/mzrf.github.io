@@ -1,104 +1,59 @@
-name: Update list.json and deploy
+name: Process Only New Markdown Files and Deploy
 
 on:
   push:
-    branches: [ master ]
     paths:
-      - 'p/**'
-      - '.github/workflows/update-and-deploy.yml'
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
+      - 'p/*.md'
+      - 'list.json'
 
 jobs:
-  update-and-deploy:
+  process:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Detect new uploaded file
-      id: detect
-      run: |
-        # 查找最新添加的 p/ 目录文件，名称包含 [
-        FILE=$(git show --pretty="" --name-only | grep '^p/\[' | tail -n 1)
-        if [ -z "$FILE" ]; then
-          echo "No new tagged file detected"
-          exit 1
-        fi
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
 
-        echo "Detected file: $FILE"
+      - name: Get newly added .md files in p/
+        id: get_new
+        run: |
+          echo "NEW_FILES<<EOF" >> $GITHUB_ENV
+          git diff --name-status ${{ github.event.before }} ${{ github.sha }} \
+          | awk '$1 == "A" && $2 ~ /^p\/.*\.md$/ { print $2 }' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
-        BASENAME=$(basename "$FILE")
-        TAGS_RAW=$(echo "$BASENAME" | sed -n 's/^\[\(.*\)\].*/\1/p')
-        NEWNAME=$(echo "$BASENAME" | sed -n 's/^\[[^]]*\]\(.*\)/\1/p')
+      - name: Run update_list.py on new files
+        if: env.NEW_FILES != ''
+        run: |
+          echo "New markdown files:"
+          echo "$NEW_FILES"
+          for file in $NEW_FILES; do
+            python3 lib/update_list.py "$file"
+          done
 
-        echo "TAGS_RAW=$TAGS_RAW" >> $GITHUB_ENV
-        echo "NEWNAME=$NEWNAME" >> $GITHUB_ENV
-        echo "OLDPATH=$FILE" >> $GITHUB_ENV
-        echo "NEWPATH=p/$NEWNAME" >> $GITHUB_ENV
+      - name: Commit updates
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add list.json p/
+          git commit -m "Update list.json and renamed files" || echo "No changes to commit"
+          git push
 
-        echo "📝 Parsed tags: $TAGS_RAW"
-        echo "📝 Cleaned file name: $NEWNAME"
+  deploy:
+    needs: process
+    runs-on: ubuntu-latest
 
-    - name: Rename file
-      run: |
-        if [ "$OLDPATH" != "$NEWPATH" ]; then
-          # 若新文件已存在，覆盖它
-          mv -f "$OLDPATH" "$NEWPATH"
-        fi
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Update list.json
-      run: |
-        DATE=$(date -u +%Y-%m-%d)
-
-        # 分隔 tags 并转为 JSON 数组
-        TAGS_JSON=$(echo "$TAGS_RAW" | tr ',; ' '\n' | sed '/^$/d' | jq -R . | jq -s .)
-
-        # 确保 list.json 存在
-        [ -f list.json ] || echo "[]" > list.json
-
-        # 是否已存在该文件
-        EXIST=$(jq --arg name "$NEWNAME" 'map(select(."1" == $name)) | length' list.json)
-
-        if [ "$EXIST" -gt 0 ]; then
-          echo "✅ 更新已有文件条目"
-          jq --arg name "$NEWNAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
-            map(
-              if ."1" == $name then
-                ."2" = $date |
-                ."3" = ((."3" + $tags) | unique)
-              else .
-              end
-            )
-          ' list.json > list.tmp.json
-        else
-          echo "➕ 新增文件条目"
-          jq --arg name "$NEWNAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
-            . + [{"1": $name, "2": $date, "3": $tags}]
-          ' list.json > list.tmp.json
-        fi
-
-        mv list.tmp.json list.json
-
-    - name: Commit and push list.json
-      run: |
-        git config user.name github-actions
-        git config user.email github-actions@github.com
-        git add list.json p
-        git commit -m "📄 Update list.json: $NEWNAME"
-        git push
-
-    - name: Setup GitHub Pages
-      uses: actions/configure-pages@v4
-
-    - name: Upload site
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: .
-
-    - name: Deploy to GitHub Pages
-      uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .  # 如果发布目录为根目录，可改成 build/ 等
