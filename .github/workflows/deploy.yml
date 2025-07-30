@@ -24,7 +24,7 @@ jobs:
       id: detect
       run: |
         # 查找最新添加的 p/ 目录文件，名称包含 [
-        FILE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^p/\[' | tail -n 1)
+        FILE=$(git show --pretty="" --name-only | grep '^p/\[' | tail -n 1)
         if [ -z "$FILE" ]; then
           echo "No new tagged file detected"
           exit 1
