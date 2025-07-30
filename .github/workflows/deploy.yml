@@ -1,4 +1,4 @@
-name: Process Only New Markdown Files and Deploy
+name: Auto Process New Markdown and Deploy
 
 on:
   push:
@@ -7,53 +7,42 @@ on:
       - 'list.json'
 
 jobs:
-  process:
+  process_and_deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Get newly added .md files in p/
-        id: get_new
+      - name: Detect newly added p/*.md files
+        id: detect_new
         run: |
-          echo "NEW_FILES<<EOF" >> $GITHUB_ENV
-          git diff --name-status ${{ github.event.before }} ${{ github.sha }} \
-          | awk '$1 == "A" && $2 ~ /^p\/.*\.md$/ { print $2 }' >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "NEW_FILES=$(git diff --name-status ${{ github.event.before }} ${{ github.sha }} | awk '$1 == "A" && $2 ~ /^p\/.*\.md$/ { print $2 }' | paste -sd ";" -)" >> $GITHUB_ENV
 
-      - name: Run update_list.py on new files
+      - name: Run Python script to update list
         if: env.NEW_FILES != ''
         run: |
-          echo "New markdown files:"
-          echo "$NEW_FILES"
-          for file in $NEW_FILES; do
+          IFS=';' read -ra FILES <<< "$NEW_FILES"
+          for file in "${FILES[@]}"; do
+            echo "Processing $file"
             python3 lib/update_list.py "$file"
           done
 
-      - name: Commit updates
+      - name: Commit Changes
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add list.json p/
-          git commit -m "Update list.json and renamed files" || echo "No changes to commit"
+          git commit -m "Updated list.json and renamed files" || echo "No changes to commit"
           git push
-
-  deploy:
-    needs: process
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .  # 如果发布目录为根目录，可改成 build/ 等
+          publish_dir: .
