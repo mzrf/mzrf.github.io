@@ -1,7 +1,10 @@
-name: Deploy to GitHub Pages
+name: Update list and deploy
 
 on:
   push:
+    paths:
+      - 'p/**'
+      - '.github/workflows/update-list-and-deploy.yml'
     branches:
       - master
 
@@ -11,87 +14,90 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  update-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      with:
-        repository: mzrf/mzrf.github.io
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.x
+      - name: Detect latest uploaded file
+        id: detect
+        run: |
+          FILE=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^p/\[' | tail -n 1)
+          if [ -z "$FILE" ]; then
+            echo "❌ No new tagged file found."
+            exit 1
+          fi
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # No other specific Python libraries are needed for this script
-    - name: Run Python script to update list.json (Regex for Tags)
-      run: python lib/update_list.py
+          BASENAME=$(basename "$FILE")
+          TAGS_RAW=$(echo "$BASENAME" | sed -n 's/^\[\(.*\)\].*/\1/p')
+          FILENAME=$(echo "$BASENAME" | sed -n 's/^\[[^\]]*\]\(.*\)/\1/p')
 
-    # 重要：此步骤现在将仅重命名 p/ 目录中与 [tag]filename.md 模式匹配的最新修改的单个文件，
-    # 使用健壮的 find | xargs ls -rt 方法。
-    - name: Rename the latest modified file in p/ matching [tag]filename.md
-      run: |
-        cd p/ || { echo "Directory p/ not found"; exit 1; }
+          echo "Detected file: $FILE"
+          echo "Raw tags: $TAGS_RAW"
+          echo "Clean name: $FILENAME"
 
-        echo "📄 Listing all *.md files in p/:"
-        ls -l *.md || echo "⚠️ No markdown files found."
+          # 重命名文件
+          mv "$FILE" "p/$FILENAME"
 
-        echo "🔍 Searching for files matching pattern: [tag]*.md"
-        MATCHING_FILES=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0)
-        
-        if [ -z "$MATCHING_FILES" ]; then
-          echo "❌ No matching files found in p/"
-          exit 0
-        fi
+          echo "name=$FILENAME" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS_RAW" >> $GITHUB_OUTPUT
 
-        # 获取最新修改的匹配文件
-        LATEST_FILE=$(find . -maxdepth 1 -type f -name '\[*\]*.md' -print0 | xargs -0 ls -rt 2>/dev/null | tail -1)
+      - name: Update list.json
+        run: |
+          FILE="p/${{ steps.detect.outputs.name }}"
+          RAW_TAGS="${{ steps.detect.outputs.tags }}"
+          NAME="${{ steps.detect.outputs.name }}"
+          DATE=$(date -u +"%Y-%m-%d")
 
-        echo "✅ Found latest matching file: $LATEST_FILE"
+          # 解析标签，支持 , ; 空格 分隔
+          IFS=$'\n' read -rd '' -a TAG_ARRAY <<< "$(echo "$RAW_TAGS" | tr ',; ' '\n' | sed '/^$/d')"
+          TAGS_JSON=$(printf '%s\n' "${TAG_ARRAY[@]}" | jq -R . | jq -s .)
 
-        # 移除前缀 "./"
-        LATEST_FILE="${LATEST_FILE##./}"
+          echo "Parsed tags: $TAGS_JSON"
 
-        new_name="${LATEST_FILE#*]}"
-        new_name="${new_name##*( )}"  # 移除可能的空格
+          if [ ! -f list.json ]; then
+            echo "[]" > list.json
+          fi
 
-        if [ -n "$new_name" ] && [ "$LATEST_FILE" != "$new_name" ]; then
-          echo "🔁 Renaming '$LATEST_FILE' → '$new_name'"
-          mv "$LATEST_FILE" "$new_name"
-        else
-          echo "⚠️ Rename skipped: Target name is empty or unchanged."
-        fi
-      working-directory: ${{ github.workspace }} # 确保此步骤在仓库的根目录运行
+          exists=$(jq --arg name "$NAME" 'map(select(."1" == $name)) | length' list.json)
 
-    - name: Commit and Push list.json and renamed files
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        
-        git add list.json         # 将 list.json 添加到暂存区
-        git add p/                # 将 p/ 目录添加到暂存区（以跟踪重命名）
-        
-        git diff-index --quiet HEAD || git commit -m "Update list.json and rename latest file via GitHub Actions (Robust ls -rt)"
-        
-        git push origin master    # 推送更改到 master 分支
+          if [ "$exists" -gt 0 ]; then
+            echo "✅ Existing file — updating"
+            jq --arg name "$NAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
+              map(
+                if ."1" == $name then
+                  ."2" = $date |
+                  ."3" = ((.["3"] + $tags) | unique)
+                else .
+                end
+              )
+            ' list.json > list.tmp.json
+          else
+            echo "➕ New file — adding"
+            jq --arg name "$NAME" --arg date "$DATE" --argjson tags "$TAGS_JSON" '
+              . + [{"1": $name, "2": $date, "3": $tags}]
+            ' list.json > list.tmp.json
+          fi
 
-    - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: gh-pages
-        folder: .
-        token: ${{ secrets.GITHUB_TOKEN }}
-        clean: true
-        force: true
-        attempt-limit: 3
+          mv list.tmp.json list.json
 
-  call-jekyll-deploy:
-      uses: ./.github/workflows/jekyll-gh-pages.yml # 引用本地的可复用工作流，@main 表示引用main分支的版本
+      - name: Commit and push changes
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add list.json p
+          git commit -m "📄 update list.json for ${{ steps.detect.outputs.name }}"
+          git push
 
-      
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Upload site content
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
