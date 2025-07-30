@@ -1,48 +1,59 @@
-import sys
 import os
+import sys
 import json
-import re
 from datetime import datetime
 
-uploaded_path = sys.argv[1]
-folder, filename = os.path.split(uploaded_path)
+def extract_tags_and_newname(filename):
+    if ']' in filename and filename.startswith('['):
+        tag_part, new_name = filename.split(']', 1)
+        tags = [t.strip() for t in re.split(r'[;, ]+', tag_part[1:]) if t.strip()]
+        return tags, new_name.strip()
+    else:
+        return [], filename
 
-if "]" in filename:
-    tag_part, new_filename = filename.split("]", 1)
-    tags = [tag.strip() for tag in re.split(r"[ ,;]+", tag_part.strip("["))]
-    new_path = os.path.join(folder, new_filename)
-    os.replace(uploaded_path, new_path)
-else:
-    new_filename = filename
-    tags = []
-    new_path = uploaded_path
+def load_list(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-date_str = datetime.now().strftime("%Y-%m-%d")
+def save_list(data, path):
+    # 按时间倒序排序
+    data.sort(key=lambda x: x["2"], reverse=True)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-list_path = "list.json"
-data = []
-if os.path.exists(list_path):
-    with open(list_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+def update_entry(entries, filename, tags):
+    today = datetime.today().strftime('%Y-%m-%d')
+    for entry in entries:
+        if entry["1"] == filename:
+            entry["2"] = today
+            entry["3"] = list(set(entry["3"] + tags))
+            return
+    entries.append({"1": filename, "2": today, "3": tags})
 
-found = False
-for item in data:
-    if item["1"] == new_filename:
-        item["2"] = date_str
-        if tags:
-            item["3"] = sorted(list(set(item.get("3", []) + tags)))
-        found = True
-        break
+def main():
+    import re
+    if len(sys.argv) < 2:
+        print("Usage: python update_list.py <filename>")
+        return
 
-if not found:
-    data.append({
-        "1": new_filename,
-        "2": date_str,
-        "3": tags
-    })
+    original_path = sys.argv[1]
+    original_name = os.path.basename(original_path)
+    folder = os.path.dirname(original_path)
 
-# ✅ 按日期升序排序（最新在后）
-data.sort(key=lambda x: x["2"])
+    tags, new_name = extract_tags_and_newname(original_name)
+    new_path = os.path.join(folder, new_name)
 
-with open(list_path, "w", encoding="utf-8") as f:
-    json.dump(data, f, indent=2, ensure_ascii=False)
+    if new_name != original_name:
+        os.rename(original_path, new_path)
+        print(f"Renamed: {original_name} → {new_name}")
+    else:
+        new_path = original_path
+
+    entries = load_list('list.json')
+    update_entry(entries, new_name, tags)
+    save_list(entries, 'list.json')
+
+if __name__ == '__main__':
+    main()
