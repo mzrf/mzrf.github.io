@@ -37,9 +37,9 @@ with open('list.json', 'r+', encoding='utf-8') as f:
             print(f"📄 Detected untagged file: {filename}")
             found = False
             for item in data:
-                if item[0] == filename:
+                if item["1"] == filename:
                     print(f"✅ Updating existing file date: {filename}")
-                    item[1] = now
+                    item[2] = now
                     found = True
                     break
             if not found:
@@ -54,10 +54,10 @@ with open('list.json', 'r+', encoding='utf-8') as f:
             print(f"🏷️ Tags: {tags}, Filename: {filename}")
 
             for item in data:
-                if item[0] == filename:
+                if item["1"] == filename:
                     print(f"📝 Updating tagged file: {filename}")
-                    item[1] = now
-                    item[2] = sorted(set(item[2] + tags))
+                    item["2"] = now
+                    item["3"] = sorted(set(item["3"] + tags))
                     break
             else:
                 print(f"➕ Adding new tagged file: {filename}")
