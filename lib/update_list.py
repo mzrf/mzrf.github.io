@@ -45,7 +45,7 @@ with open('list.json', 'r+', encoding='utf-8') as f:
             if not found:
                 print(f"➕ Adding new untagged file: {filename}")
                 data.append([filename, now, []])
-            merge_file(filepath, f'merged/{filename}')
+            merge_file(filepath, filename)
         else:
             # 含标签
             tag_str = parts[0].lstrip('[')
