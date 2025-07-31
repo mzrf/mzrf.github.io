@@ -1,54 +1,39 @@
-name: Auto Process New Markdown and Deploy
+name: Get Latest Commit Changed Files
 
 on:
   push:
-    paths:
-      - 'p/*.md'
-      - 'list.json'
+    branches:
+      - master
 
 jobs:
-  process_and_deploy:
+  detect_changes:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          fetch-depth: 2  # 确保获取至少两个 commit 以便 diff
 
-      - name: 🔍 Detect added and modified Markdown files
-        id: detect_files
+      - name: Get added, modified, and deleted files
+        id: file_changes
         run: |
-          echo "Event Path: $GITHUB_EVENT_PATH"
-          jq '.' "$GITHUB_EVENT_PATH"
-          FILES=$(jq -r '[.head_commit.added[], .head_commit.modified[]] | .[]' "$GITHUB_EVENT_PATH" | grep '^p/.*\.md$' || true)
-          echo "Detected Files:"
-          echo "$FILES"
-          echo "ALL_FILES=$(echo "$FILES" | paste -sd ';' -)" >> $GITHUB_ENV
+          echo "🔍 Detecting file changes in latest commit..."
 
-      - name: 🛠️ Run Python script for each file
-        if: env.ALL_FILES != ''
+          added=$(git diff-tree --no-commit-id --diff-filter=A --name-only -r HEAD)
+          modified=$(git diff-tree --no-commit-id --diff-filter=M --name-only -r HEAD)
+          deleted=$(git diff-tree --no-commit-id --diff-filter=D --name-only -r HEAD)
+
+          echo "added=$added" >> $GITHUB_OUTPUT
+          echo "modified=$modified" >> $GITHUB_OUTPUT
+          echo "deleted=$deleted" >> $GITHUB_OUTPUT
+
+      - name: Debug output of changed files
         run: |
-          IFS=';' read -ra FILES <<< "$ALL_FILES"
-          for file in "${FILES[@]}"; do
-            echo "➡️ Processing file: $file"
-            python3 lib/update_list.py "$file"
-          done
+          echo "🟩 Added files:"
+          echo "${{ steps.file_changes.outputs.added }}"
 
-      - name: 💾 Commit and Push Changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add list.json p/
-          git status
-          git commit -m "🤖 Update list.json and renamed new files" || echo "No changes to commit"
-          git push
+          echo "🟨 Modified files:"
+          echo "${{ steps.file_changes.outputs.modified }}"
 
-      - name: 🚀 Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
+          echo "🟥 Deleted files:"
+          echo "${{ steps.file_changes.outputs.deleted }}"
