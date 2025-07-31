@@ -10,41 +10,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # 获取前一个 commit 以比较变化
+          fetch-depth: 2  # 获取前一次 commit 以比较变化
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Get changed files
+      - name: 🔍 Get changed files
         id: changed
         run: |
-          echo "🔍 Detecting changed files..."
+          echo "Detecting changed files..."
           changed_files=$(git diff --name-only HEAD~1 HEAD)
+          echo "🔁 Changed files:"
+          echo "$changed_files"
           echo "files<<EOF" >> $GITHUB_OUTPUT
           echo "$changed_files" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt || true  # 如果你有依赖可配置此行
+      - name: 📦 Install Python dependencies
+        run: pip install -r requirements.txt || true
 
-      - name: Run update_list.py on new/changed p/*.md files
+      - name: ⚙️ Run update_list.py on new/changed p/*.md files
         run: |
+          echo "Start processing changed markdown files..."
+          echo "Files received from previous step:"
+          echo "${{ steps.changed.outputs.files }}"
+
           echo "${{ steps.changed.outputs.files }}" | while read file; do
-            if [[ "$file" == p/*.md ]]; then
-              echo "📝 Processing $file..."
+            echo "⏳ Checking file: $file"
+            if [[ "$file" == p/*.md || "$file" == p/\[*\]*.md ]]; then
+              echo "✅ Matched: $file"
               python3 lib/update_list.py "$file"
+            else
+              echo "❌ Skipped: $file"
             fi
           done
 
-      - name: Commit and Push Changes
+      - name: 💾 Commit and Push Changes
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add list.json p/*.md
-          git commit -m "🤖 Auto update list.json and processed files" || echo "No changes to commit"
+          git add list.json p/*.md || true
+          git status
+          git diff --cached
+          git commit -m "🤖 Auto update list.json and processed files" || echo "🟡 No changes to commit"
           git push origin master
