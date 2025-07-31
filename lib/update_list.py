@@ -1,5 +1,4 @@
-# lib/update_list.py
-import sys, os, json, shutil
+import sys, os, json
 from datetime import datetime
 
 def merge_file(src, dst):
@@ -39,12 +38,12 @@ with open('list.json', 'r+', encoding='utf-8') as f:
             for item in data:
                 if item["1"] == filename:
                     print(f"✅ Updating existing file date: {filename}")
-                    item[2] = now
+                    item["2"] = now
                     found = True
                     break
             if not found:
                 print(f"➕ Adding new untagged file: {filename}")
-                data.append([filename, now, []])
+                data.append({"1": filename, "2": now, "3": []})
             merge_file(filepath, filename)
         else:
             # 含标签
@@ -61,7 +60,7 @@ with open('list.json', 'r+', encoding='utf-8') as f:
                     break
             else:
                 print(f"➕ Adding new tagged file: {filename}")
-                data.append([filename, now, tags])
+                data.append({"1": filename, "2": now, "3": tags})
 
             merge_file(filepath, filename)
             new_path = os.path.join('p', filename)
