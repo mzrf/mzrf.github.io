@@ -1,4 +1,4 @@
-name: Get Latest Commit Changed Files
+name: Auto Process New Markdown and Deploy
 
 on:
   push:
@@ -6,34 +6,45 @@ on:
       - master
 
 jobs:
-  detect_changes:
+  update_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # 确保获取至少两个 commit 以便 diff
+          fetch-depth: 2  # 获取前一个 commit 以比较变化
 
-      - name: Get added, modified, and deleted files
-        id: file_changes
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Get changed files
+        id: changed
         run: |
-          echo "🔍 Detecting file changes in latest commit..."
+          echo "🔍 Detecting changed files..."
+          changed_files=$(git diff --name-only HEAD~1 HEAD)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$changed_files" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-          added=$(git diff-tree --no-commit-id --diff-filter=A --name-only -r HEAD)
-          modified=$(git diff-tree --no-commit-id --diff-filter=M --name-only -r HEAD)
-          deleted=$(git diff-tree --no-commit-id --diff-filter=D --name-only -r HEAD)
+      - name: Install dependencies
+        run: pip install -r requirements.txt || true  # 如果你有依赖可配置此行
 
-          echo "added=$added" >> $GITHUB_OUTPUT
-          echo "modified=$modified" >> $GITHUB_OUTPUT
-          echo "deleted=$deleted" >> $GITHUB_OUTPUT
-
-      - name: Debug output of changed files
+      - name: Run update_list.py on new/changed p/*.md files
         run: |
-          echo "🟩 Added files:"
-          echo "${{ steps.file_changes.outputs.added }}"
+          echo "${{ steps.changed.outputs.files }}" | while read file; do
+            if [[ "$file" == p/*.md ]]; then
+              echo "📝 Processing $file..."
+              python3 lib/update_list.py "$file"
+            fi
+          done
 
-          echo "🟨 Modified files:"
-          echo "${{ steps.file_changes.outputs.modified }}"
-
-          echo "🟥 Deleted files:"
-          echo "${{ steps.file_changes.outputs.deleted }}"
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add list.json p/*.md
+          git commit -m "🤖 Auto update list.json and processed files" || echo "No changes to commit"
+          git push origin master
