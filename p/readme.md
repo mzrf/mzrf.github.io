@@ -8,7 +8,7 @@ Once yo
 
 ## Manage file synchronization
 
-S
+Sfjffjfb
 ## Update a publication
 
 After publishing, StackEdit keeps your file linked to that publication which makes it easy for you to re-publish it. Once you have modified your file and you want to update your publication, click on the **Publish now** button in the navigation bar.
@@ -19,7 +19,8 @@ After publishing, StackEdit keeps your file linked to that publication which mak
 
 Since one file can be published to multiple locations, you can list and manage publish locations by clicking **File publication** in the **Publish** sub-menu. This allows you to list and remove publication locations that are linked to your file.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTExNTI0NDg2NzQsLTEzMTMzODE3MzQsMz
-U0NDI0ODE2LC05MjU3NzA3NTgsLTE1NjUwMDgwMjgsLTMwNTM0
-NTIyOSwtMTM5OTg0MDQ3MiwxMDE2NTU1NTk5XX0=
+eyJoaXN0b3J5IjpbLTcxNTI1MTk5MCwtMTE1MjQ0ODY3NCwtMT
+MxMzM4MTczNCwzNTQ0MjQ4MTYsLTkyNTc3MDc1OCwtMTU2NTAw
+ODAyOCwtMzA1MzQ1MjI5LC0xMzk5ODQwNDcyLDEwMTY1NTU1OT
+ldfQ==
 -->
