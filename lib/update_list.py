@@ -44,9 +44,9 @@ with open('list.json', 'r+', encoding='utf-8') as f:
             filename = parts[1]
 
             for item in data:
-                if item[0] == filename:
-                    item[1] = now
-                    item[2] = sorted(set(item[2] + tags))
+                if item["1"] == filename:
+                    item["2"] = now
+                    item["3"] = sorted(set(item[2] + tags))
                     break
             else:
                 data.append([filename, now, tags])
