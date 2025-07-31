@@ -1,74 +1,60 @@
-import os
-import sys
-import json
+# lib/update_list.py
+import sys, os, json, shutil
 from datetime import datetime
-import re
 
-def load_list(path='list.json'):
-    if not os.path.exists(path):
-        return []
-    with open(path, 'r', encoding='utf-8') as f:
+def merge_file(src, dst):
+    """追加 src 文件内容到 dst 文件"""
+    with open(src, 'r', encoding='utf-8') as fsrc, open(dst, 'a', encoding='utf-8') as fdst:
+        fdst.write(fsrc.read())
+
+# 传入变更文件名，逗号分隔
+files = sys.argv[1].split(',')
+
+# 读取 list.json
+with open('list.json', 'r+', encoding='utf-8') as f:
+    try:
         data = json.load(f)
-        return data if isinstance(data, list) else [data]
+    except json.JSONDecodeError:
+        data = []
 
-def save_list(data, path='list.json'):
-    # 按日期降序排序（字段 "2"）
-    data.sort(key=lambda x: x.get("2", ""), reverse=True)
-    with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    for filepath in files:
+        if not filepath.startswith('p/'):
+            continue
 
-def extract_tag_and_filename(basename):
-    match = re.match(r'^\[(.*?)\](.+\.md)$', basename)
-    if match:
-        tag = match.group(1).strip()
-        filename = match.group(2).strip()
-        return tag, filename
-    else:
-        return None, basename
+        b = os.path.basename(filepath)
+        parts = b.split(']')
+        now = datetime.now().strftime('%Y-%m-%d')
 
-def process(file_path):
-    if not os.path.exists(file_path):
-        print(f"❌ File not found: {file_path}")
-        return
+        if len(parts) == 1:
+            # 无标签，直接更新日期、合并文件
+            filename = b
+            found = False
+            for item in data:
+                if item[0] == filename:
+                    item[1] = now
+                    found = True
+                    break
+            if not found:
+                data.append([filename, now, []])
+            merge_file(filepath, f'merged/{filename}')
+        else:
+            # 含标签
+            tag_str = parts[0].lstrip('[')
+            tags = [t.strip() for t in tag_str.replace(',', ' ').replace(';', ' ').split()]
+            filename = parts[1]
 
-    dir_name, basename = os.path.split(file_path)
-    tag, new_name = extract_tag_and_filename(basename)
-    current_date = datetime.today().strftime('%Y-%m-%d')
+            for item in data:
+                if item[0] == filename:
+                    item[1] = now
+                    item[2] = sorted(set(item[2] + tags))
+                    break
+            else:
+                data.append([filename, now, tags])
 
-    list_data = load_list()
+            # 合并文件 + 重命名
+            merge_file(filepath, f'merged/{filename}')
+            os.rename(filepath, os.path.join('p', filename))
 
-    # Check if renaming needed
-    if tag:
-        new_path = os.path.join(dir_name, new_name)
-        os.rename(file_path, new_path)
-        file_path = new_path
-        basename = new_name
-        print(f"🔁 Renamed to: {basename}")
-
-    found = False
-    for item in list_data:
-        if item["1"] == basename:
-            found = True
-            item["2"] = current_date
-            if tag and tag not in item["3"]:
-                item["3"].append(tag)
-            print(f"✅ Updated existing entry: {basename}")
-            break
-
-    if not found:
-        entry = {
-            "1": basename,
-            "2": current_date,
-            "3": [tag] if tag else []
-        }
-        list_data.append(entry)
-        print(f"➕ Added new entry: {basename}")
-
-    save_list(list_data)
-    print(f"💾 list.json updated and sorted.")
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python update_list.py <path/to/file.md>")
-        sys.exit(1)
-    process(sys.argv[1])
+    f.seek(0)
+    json.dump(data, f, ensure_ascii=False, indent=2)
+    f.truncate()
