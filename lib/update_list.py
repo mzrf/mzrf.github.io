@@ -63,7 +63,7 @@ with open('list.json', 'r+', encoding='utf-8') as f:
                 print(f"➕ Adding new tagged file: {filename}")
                 data.append([filename, now, tags])
 
-            merge_file(filepath, f'merged/{filename}')
+            merge_file(filepath, filename)
             new_path = os.path.join('p', filename)
             print(f"🚚 Renaming {filepath} → {new_path}")
             os.rename(filepath, new_path)
