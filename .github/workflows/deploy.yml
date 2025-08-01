@@ -8,7 +8,10 @@ on:
 jobs:
   update_and_deploy:
     runs-on: ubuntu-latest
-
+    env:
+      LANG: "en_US.UTF-8"
+      LC_ALL: "en_US.UTF-8"
+      
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -36,9 +39,19 @@ jobs:
 
       - name: ⚙️ Run update_list.py on new/changed p/*.md files
         run: |
-          file=$(git diff --name-only HEAD^ HEAD)
-          echo "📝 Changed file: $file"
-          python3 lib/update_list.py "$file"
+          echo "Start processing changed markdown files..."
+          files=$(git diff --name-only HEAD^ HEAD)
+      
+          while IFS= read -r file; do
+            echo "📝 Changed file: $file"
+      
+            # 只处理 p/*.md 文件（支持中文和空格）
+            if [[ "$file" == p/*.md ]]; then
+              python3 lib/update_list.py "$file"
+            else
+              echo "⏭️ Skipped non-target file: $file"
+            fi
+          done <<< "$files"
 
       - name: 💾 Commit and Push Changes
         run: |
