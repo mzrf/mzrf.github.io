@@ -16,57 +16,42 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # 获取前一次 commit 以比较变化
+          fetch-depth: 2
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: 🔍 Get changed files
-        id: changed
-        run: |
-          echo "Detecting changed files..."
-          changed_files=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD)
-          echo "🔁 Changed files:"
-          echo "$changed_files"
-          echo "files<<EOF" >> $GITHUB_OUTPUT
-          echo "$changed_files" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: 📦 Install Python dependencies
         run: pip install -r requirements.txt || true
 
-      - name: ⚙️ Run update_list.py on new/changed p/*.md files
+      - name: ⚙️ Run update_list.py on new/changed p/*.md file
         run: |
-          echo "Start processing changed markdown files..."
-          files="${{ steps.changed.outputs.files }}"
-      
-          while IFS= read -r file; do
-            echo "📝 Changed file: $file"
-      
-            # 只处理 p/*.md 文件（支持中文和空格）
-            if [[ "$file" == \"p/*.md\" ]]; then
-              python3 lib/update_list.py "$file"
-            else
-              echo "⏭️ Skipped non-target file: $file"
-            fi
-          done <<< "$files"
+          echo "Start processing changed markdown file..."
+          file=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '^p/.*\.md$' || true)
+
+          if [ -n "$file" ]; then
+            echo "📝 Detected file: \"$file\""
+            python3 lib/update_list.py "$file"
+          else
+            echo "⏭️ No valid markdown file detected. Skipping."
+          fi
 
       - name: 💾 Commit and Push Changes
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-      
+
           echo "📁 当前变更文件："
           git status
-      
+
           echo "📌 添加 list.json 和 p/*.md 到暂存区"
           git add list.json p/*.md
-      
+
           echo "📋 显示暂存差异"
           git diff --cached
-      
+
           if git diff --cached --quiet; then
             echo "🟡 没有需要提交的更改，跳过 commit。"
           else
@@ -77,7 +62,7 @@ jobs:
   deploy:
     needs: update_and_deploy
     runs-on: ubuntu-latest
-  
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
@@ -88,4 +73,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          force_orphan: true  # 避免出现历史 commit 冲突
+          force_orphan: true
