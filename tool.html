@@ -21,7 +21,6 @@
   </style>
 </head>
 <body>
-  
   <h2>Markdown 图片链接转 Base64 工具</h2>
   <p>输入 Markdown 文本，图片链接将替换为引用形式（如 ![test][1]），Base64 编码将以 [1]:data:image/... 形式追加到文末。</p>
   <textarea id="input" placeholder="粘贴含有 ![](http...) 的 Markdown 内容"></textarea>
@@ -32,7 +31,6 @@
     <h3>输出结果：</h3>
     <div id="output"></div>
   </div>
-
   <script>
     async function fetchImageAsBase64(url) {
       try {
