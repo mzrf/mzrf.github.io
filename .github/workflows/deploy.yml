@@ -36,19 +36,9 @@ jobs:
 
       - name: ⚙️ Run update_list.py on new/changed p/*.md files
         run: |
-          echo "Start processing changed markdown files..."
-          echo "Files received from previous step:"
-          echo "${{ steps.changed.outputs.files }}"
-
-          echo "${{ steps.changed.outputs.files }}" | while read file; do
-            echo "⏳ Checking file: $file"
-            if [[ "$file" == p/*.md || "$file" == p/\[*\]*.md ]]; then
-              echo "✅ Matched: $file"
-              python3 lib/update_list.py "$file"
-            else
-              echo "❌ Skipped: $file"
-            fi
-          done
+          file=$(git diff --name-only HEAD^ HEAD)
+          echo "📝 Changed file: $file"
+          python3 lib/update_list.py "$file"
 
       - name: 💾 Commit and Push Changes
         run: |
