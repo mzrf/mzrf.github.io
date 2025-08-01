@@ -46,7 +46,7 @@ jobs:
             echo "📝 Changed file: $file"
       
             # 只处理 p/*.md 文件（支持中文和空格）
-            if [[ "$file" == p/*.md ]]; then
+            if [[ "$file" == \"p/*.md\" ]]; then
               python3 lib/update_list.py "$file"
             else
               echo "⏭️ Skipped non-target file: $file"
