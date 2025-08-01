@@ -40,7 +40,7 @@ jobs:
       - name: ⚙️ Run update_list.py on new/changed p/*.md files
         run: |
           echo "Start processing changed markdown files..."
-          files=$(git diff --name-only HEAD^ HEAD)
+          files=$(git diff --name-only --diff-filter=AM HEAD^ HEAD)
       
           while IFS= read -r file; do
             echo "📝 Changed file: $file"
