@@ -1,4 +1,5 @@
 import sys, os, json
+import urllib.parse
 from datetime import datetime
 
 def merge_file(src, dst):
@@ -8,7 +9,8 @@ def merge_file(src, dst):
         fdst.write(fsrc.read())
 
 # 传入变更文件名，逗号分隔
-files = sys.argv[1].split(',')
+escaped_string=  = encoded_string.encode('utf-8').decode(sys.argv[1].split(','))
+files = urllib.parse.unquote(escaped_string)
 print(f"🗂️ Received files: {files}")
 
 # 读取 list.json
