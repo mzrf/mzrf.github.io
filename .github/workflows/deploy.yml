@@ -60,9 +60,18 @@ jobs:
           git commit -m "🤖 Auto update list.json and processed files" || echo "🟡 No changes to commit"
           git push origin master
 
-      - name: 📦 Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
+deploy:
+  needs: update_and_deploy
+  runs-on: ubuntu-latest
+  
+  steps:
+    - name: 📥 Checkout repository
+      uses: actions/checkout@v4
 
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    - name: 🚀 Deploy master branch root to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: master
+        publish_dir: ./  # 发布根目录内容
+        force_orphan: true  # 避免出现历史 commit 冲突
