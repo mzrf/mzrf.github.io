@@ -57,11 +57,22 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add list.json p/*.md || true
+      
+          echo "📁 当前变更文件："
           git status
+      
+          echo "📌 添加 list.json 和 p/*.md 到暂存区"
+          git add list.json p/*.md
+      
+          echo "📋 显示暂存差异"
           git diff --cached
-          git commit -m "🤖 Auto update list.json and processed files" || echo "🟡 No changes to commit"
-          git push origin master
+      
+          if git diff --cached --quiet; then
+            echo "🟡 没有需要提交的更改，跳过 commit。"
+          else
+            git commit -m "🤖 Auto update list.json and processed files"
+            git push origin master || echo "❌ Push 失败，请检查权限或分支冲突"
+          fi
 
   deploy:
     needs: update_and_deploy
