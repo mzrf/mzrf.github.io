@@ -1,5 +1,5 @@
 import sys, os, json
-import urllib.parse
+import codecs
 from datetime import datetime
 
 def merge_file(src, dst):
@@ -9,9 +9,23 @@ def merge_file(src, dst):
         fdst.write(fsrc.read())
 
 # 传入变更文件名，逗号分隔
-escaped_string=  = encoded_string.encode('utf-8').decode(sys.argv[1].split(','))
-files = urllib.parse.unquote(escaped_string)
-print(f"🗂️ Received files: {files}")
+raw_path = sys.argv[1].strip().strip('"')
+
+# 如果路径中包含类似 \347 这种字节转义，说明需要转码
+if '\\' in raw_path:
+    try:
+        # 将字节形式的字符串转为真正的 UTF-8 中文路径
+        corrected_path = codecs.decode(raw_path.encode('latin1'), 'unicode_escape').encode('latin1').decode('utf-8')
+        print(f"✅ 修正路径: {corrected_path}")
+        files = corrected_path
+    except Exception as e:
+        print(f"❌ 路径解码失败: {e}")
+        files = raw_path  # 回退
+else:
+    file_path = raw_path
+
+# ✅ 可读日志输出
+print(f"🔍 最终处理文件路径: {files}")
 
 # 读取 list.json
 with open('list.json', 'r+', encoding='utf-8') as f:
