@@ -2,6 +2,7 @@ import sys, os, json
 import codecs
 from datetime import datetime
 
+
 def merge_file(src, dst):
     """追加 src 文件内容到 dst 文件"""
     print(f"📎 Merging content from {src} to {dst}")
