@@ -16,7 +16,7 @@ jobs:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 2  # 获取上次提交记录
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
@@ -26,32 +26,21 @@ jobs:
       - name: 📦 Install Python dependencies
         run: pip install -r requirements.txt || true
 
-      - name: ⚙️ Run update_list.py on new/changed p/*.md file
+      - name: ⚙️ Run update_list.py on changed file
         run: |
           echo "Start processing changed markdown file..."
-          file=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep '^p/.*\.md$' || true)
-
-          if [ -n "$file" ]; then
-            echo "📝 Detected file: \"$file\""
-            python3 lib/update_list.py "$file"
-          else
-            echo "⏭️ No valid markdown file detected. Skipping."
-          fi
+          file=$(git diff --name-only --diff-filter=AM HEAD^ HEAD)
+          echo "🔁 Changed file: $file"
+          python3 lib/update_list.py "$file"
 
       - name: 💾 Commit and Push Changes
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-
-          echo "📁 当前变更文件："
-          git status
-
+      
           echo "📌 添加 list.json 和 p/*.md 到暂存区"
           git add list.json p/*.md
-
-          echo "📋 显示暂存差异"
-          git diff --cached
-
+      
           if git diff --cached --quiet; then
             echo "🟡 没有需要提交的更改，跳过 commit。"
           else
@@ -62,7 +51,7 @@ jobs:
   deploy:
     needs: update_and_deploy
     runs-on: ubuntu-latest
-
+  
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
@@ -73,4 +62,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./
-          force_orphan: true
+          force_orphan: true  # 删除 gh-pages 历史记录，保持干净
