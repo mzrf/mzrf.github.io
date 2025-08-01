@@ -59,3 +59,10 @@ jobs:
           git diff --cached
           git commit -m "🤖 Auto update list.json and processed files" || echo "🟡 No changes to commit"
           git push origin master
+
+      - name: 📦 Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
