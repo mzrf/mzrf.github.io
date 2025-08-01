@@ -28,23 +28,8 @@ a { text-decoration: none; color: #015ecc; }
 h1,p{text-align:center;margin-top:10rem}
 p{text-align:center;margin:2rem 0 10rem 0}
 section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem}
-@media (max-width: 1600px) {
-	#toc{display:none}
-	main{justify-content:flex-start;}
-	#right{width:calc(100vw - 63rem )}
-}
-@media (max-width: 1300px) {
-	#toc{display:none}
-	#right{position:static;max-width:960px;margin-top:1rem;width:960px}
-	main{justify-content:space-around;flex-wrap: wrap;}
-}
-@media (max-width: 600px) {
-	nav { justify-content: space-around; }
-	nav a{font-size:1.5rem}
-	nav .label { display: none; }
-	main{justify-content:space-around;flex-wrap: wrap;}
-	#toc{display:none;}
-	.main,aside{width:calc(100vw - 2rem )}
+ @media (max-width: 960px) {
+	.main{width:calc(100vw - 2rem )}
 }
 	</style>
 </head>
