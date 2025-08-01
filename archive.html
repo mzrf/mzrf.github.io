@@ -128,6 +128,14 @@ section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px so
 
                 yearNode.appendChild(nestedList); // Append the nested file list to the year node
                 tree.appendChild(yearNode);       // Append the year node to the main tree container
+		const firstToggle = document.querySelector('.toggle');
+		if (firstToggle) {
+		    firstToggle.classList.add('active');
+		    const childUl = firstToggle.querySelector('ul.nested');
+		    if (childUl) {
+		        childUl.style.display = 'block'; // 显示第一个年目录下的列表
+		    }
+		}
             });
         })
         .catch(error => {
