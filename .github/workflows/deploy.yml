@@ -27,7 +27,7 @@ jobs:
         id: changed
         run: |
           echo "Detecting changed files..."
-          changed_files=$(git diff --name-only HEAD~1 HEAD)
+          changed_files=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD)
           echo "🔁 Changed files:"
           echo "$changed_files"
           echo "files<<EOF" >> $GITHUB_OUTPUT
