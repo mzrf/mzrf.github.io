@@ -128,10 +128,6 @@ section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px so
 
                 yearNode.appendChild(nestedList); // Append the nested file list to the year node
                 tree.appendChild(yearNode);       // Append the year node to the main tree container
-		if (index === 0) {
-			yearNode.classList.add('active');
-			nestedList.style.display = 'block';
-		}
             });
         })
         .catch(error => {
