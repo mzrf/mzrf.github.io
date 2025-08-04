@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>工具合集</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.25rem;
+      color: #2c3e50;
+      border-left: 4px solid #3498db;
+      padding-left: 0.5rem;
+    }
+
+    .tool-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .tool-link {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      background: #e6f0ff;
+      text-decoration: none;
+      color: #0366d6;
+      border: 1px solid #c6dbf7;
+      transition: background 0.2s ease;
+      font-size: 0.95rem;
+    }
+
+    .tool-link:hover {
+      background: #d0e7ff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧰 工具合集</h1>
+  <div id="tools">加载中...</div>
+
+  <script>
+    const mdPath = "p/tools.md"; // 替换为你的 Markdown 文件路径
+
+    async function loadMarkdown() {
+      try {
+        const res = await fetch(mdPath);
+        if (!res.ok) throw new Error("加载 Markdown 文件失败");
+        const md = await res.text();
+        renderToolGroups(md);
+      } catch (e) {
+        document.getElementById("tools").innerHTML = `<p style="color:red;">${e.message}</p>`;
+      }
+    }
+
+    function renderToolGroups(md) {
+      const lines = md.split("\n");
+      let html = "";
+      let groupStarted = false;
+
+      for (let line of lines) {
+        line = line.trim();
+        if (line.startsWith("##")) {
+          if (groupStarted) html += "</div>"; // 结束上一组
+          html += `<h2>${line.replace(/^##+/, "").trim()}</h2><div class="tool-list">`;
+          groupStarted = true;
+        } else if (line.startsWith("- [")) {
+          const match = line.match(/- \[(.+?)\]\((.+?)\)/);
+          if (match) {
+            const [_, text, url] = match;
+            html += `<a class="tool-link" href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+          }
+        }
+      }
+
+      if (groupStarted) html += "</div>";
+      document.getElementById("tools").innerHTML = html;
+    }
+
+    loadMarkdown();
+  </script>
+</body>
+</html>
