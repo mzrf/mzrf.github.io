@@ -7,9 +7,9 @@
 - [RegEx101](https://regex101.com)
 
 ## Tool
-- [md img url 2 base64](https://mzrf.github.io/url2base64.html)
+- [图片url转编码](https://mzrf.github.io/lib/url2base64.html)
 - [stackedit](https://stackedit.io/app#)
-- [一行代码](https://mzrf.github.io/code.html)
+- [一行代码](https://mzrf.github.io/lib/code.html)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMzE1OTY2NzkyXX0=
+eyJoaXN0b3J5IjpbMTU4MzE3NjEyM119
 -->
