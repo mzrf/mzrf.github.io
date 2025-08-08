@@ -9,6 +9,7 @@
 ## Tool
 - [md img url 2 base64](https://mzrf.github.io/url2base64.html)
 - [stackedit](https://stackedit.io/app#)
+- [一行代码](https://mzrf.github.io/code.html)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgyNDg1MTk3OF19
+eyJoaXN0b3J5IjpbMzE1OTY2NzkyLC04MjQ4NTE5NzhdfQ==
 -->
