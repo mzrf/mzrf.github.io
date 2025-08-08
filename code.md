@@ -1,6 +1,6 @@
-## 一行代码
-
 ###  
+
+## 一行代码
 
 ### 自动归档或解压 `.tar.xz` 文件
 
@@ -40,5 +40,5 @@ else
 fi
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI2NTgxNjM4N119
+eyJoaXN0b3J5IjpbMTM1MDgxNjI3MSwtMjY1ODE2Mzg3XX0=
 -->
