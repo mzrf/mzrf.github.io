@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>代码示例</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <style>
+    /* 你的其他样式保持不变 */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+    body::-webkit-scrollbar, {display: none}
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f9f9f9; }
+    nav { position: fixed; top: 0; left: 0; right: 0; height: 3rem; color: #222; background: #fdfdfd; display: flex; align-items: center; gap: 2rem; padding: 0 1rem; z-index: 1000; border-bottom: 1px solid #e0e0e0; }
+    nav a { text-decoration: none; color: #0366d6; display: flex; align-items: center; }
+    main { 
+        margin-top: 3rem;
+        height: calc(100vh - 3rem); 
+        overflow-y: auto; 
+        padding: 3rem 1rem 0 1rem; 
+        max-width: 900px; 
+        margin-left: auto; 
+        margin-right: auto; 
+    }
+    pre {white-space: pre-wrap;overflow-wrap: break-word;word-wrap: break-word;}
+    /* 核心修复：为 marked.js 渲染的内容设置样式类 max-width: 980px; */
+    .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        margin: 0 auto;
+    }
+    @media (max-width: 600px){
+      nav a { font-size: 1.2rem; }
+      nav { justify-content: space-around; }
+      nav .label { display: none; }
+      main{
+        padding:3rem 0.5rem 0 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
+    <a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
+    <a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
+    <a href="tool.html"><span class="icon">🔧</span><span class="label">工具</span></a>
+    <a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
+  </nav>
+  <main>
+    <div id="content"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script>
+    async function loadMarkdown() {
+      try {
+        const res = await fetch('../code.md');
+        if (!res.ok) throw new Error("无法加载 code.md");
+        const mdText = await res.text();
+
+        // 将 marked.js 转换的 HTML 内容插入到 DOM 中
+        const htmlContent = marked.parse(mdText);
+        const contentDiv = document.getElementById('content');
+        contentDiv.innerHTML = htmlContent;
+
+        // 给内容容器添加样式类，以便 github-markdown-css 生效
+        contentDiv.classList.add('markdown-body');
+
+        // 调用 highlight.js 来高亮所有代码块
+        hljs.highlightAll();
+
+      } catch (err) {
+        document.getElementById('content').innerHTML = `<p style="color:red;">${err.message}</p>`;
+      }
+    }
+
+    loadMarkdown();
+  </script>
+</body>
+</html>
