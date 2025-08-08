@@ -4,7 +4,7 @@
 
 ### 自动归档或解压 `.tar.xz` 文件
 
-本脚本可以自动判断输入路径是**目录**还是**压缩包**，并执行相应的压缩或解压操作。  
+> 本脚本可以自动判断输入路径是**目录**还是**压缩包**，并执行相应的压缩或解压操作。  
 适用于 Linux / macOS（`zsh` 环境）。
 ```bash
 # 压缩
@@ -40,5 +40,5 @@ else
 fi
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTM1MDgxNjI3MV19
+eyJoaXN0b3J5IjpbNjY3MDU0MDYxXX0=
 -->
