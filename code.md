@@ -4,19 +4,13 @@
 
 本脚本可以自动判断输入路径是**目录**还是**压缩包**，并执行相应的压缩或解压操作。  
 适用于 Linux / macOS（`zsh` 环境）。
-
----
-
-## 使用方法
-
 ```bash
 # 压缩
 ./archive.sh my_folder
-
 # 解压
 ./archive.sh my_archive.tar.xz
 
-```basg
+# -完整脚本
 #! /bin/zsh
 # 自动归档文件夹或解压gz.tar文件
 # tar -caf archive.tar.xz directory 压缩
@@ -44,5 +38,5 @@ else
 fi
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTgzNjIzMzExNywxOTMxNDcxMzgxXX0=
+eyJoaXN0b3J5IjpbLTMzMzAxNjIyMF19
 -->
