@@ -81,4 +81,5 @@ with open('list.json', 'r+', encoding='utf-8') as f:
     f.seek(0)
     json.dump(data, f, ensure_ascii=False, indent=2)
     f.truncate()
-    print("✅ list.json 更新完毕")
+    
+    print(f"GIT_RM_TARGET={filepath}")
