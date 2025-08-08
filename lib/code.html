@@ -18,15 +18,15 @@
         margin-top: 3rem;
         height: calc(100vh - 3rem); 
         overflow-y: auto; 
-        padding: 3rem 1rem 0 1rem; 
-        max-width: 900px; 
+        padding:1rem; 
         margin-left: auto; 
         margin-right: auto; 
     }
-    pre {white-space: pre-wrap;overflow-wrap: break-word;word-wrap: break-word;}
+    pre>code,pre span{white-space: pre-wrap;overflow-wrap: break-word;word-wrap: break-word;}
     /* 核心修复：为 marked.js 渲染的内容设置样式类 max-width: 980px; */
     .markdown-body {
         box-sizing: border-box;
+        padding:1rem;
         min-width: 200px;
         margin: 0 auto;
     }
@@ -35,8 +35,9 @@
       nav { justify-content: space-around; }
       nav .label { display: none; }
       main{
-        padding:3rem 0.5rem 0 0.5rem;
+        padding:0;
       }
+      .markdown-body {padding:0.5rem}
     }
   </style>
 </head>
