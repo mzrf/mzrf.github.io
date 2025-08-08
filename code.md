@@ -1,5 +1,7 @@
 ## 一行代码
 
+###  
+
 ### 自动归档或解压 `.tar.xz` 文件
 
 本脚本可以自动判断输入路径是**目录**还是**压缩包**，并执行相应的压缩或解压操作。  
@@ -38,5 +40,5 @@ else
 fi
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTMzMzAxNjIyMF19
+eyJoaXN0b3J5IjpbLTI2NTgxNjM4N119
 -->
