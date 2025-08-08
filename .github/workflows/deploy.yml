@@ -27,17 +27,26 @@ jobs:
         run: pip install -r requirements.txt || true
 
       - name: ⚙️ Run update_list.py on changed file
+        id: update_list
         run: |
           echo "Start processing changed markdown file..."
           file=$(git diff --name-only --diff-filter=A HEAD^ HEAD)
           echo "🔁 Changed file: $file"
-          python3 lib/update_list.py "$file"
+          output=$(python3 lib/update_list.py "$file")
+          echo "$output"
+          old_file=$(echo "$output" | grep "GIT_RM_TARGET" | cut -d= -f2)
+          echo "old_file=$old_file" >> $GITHUB_ENV
 
       - name: 💾 Commit and Push Changes
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-      
+          git config --global core.quotepath false  # 日志中显示中文文件名
+          
+          if [ -n "$old_file" ]; then
+            git rm -f "$old_file" || true
+          fi
+          
           echo "📌 添加 list.json 和 p/*.md 到暂存区"
           git add list.json p/*.md
       
