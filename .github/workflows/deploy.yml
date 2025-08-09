@@ -57,18 +57,18 @@ jobs:
             git push origin master || echo "❌ Push 失败，请检查权限或分支冲突"
           fi
 
-  deploy:
-    needs: update_and_deploy
-    runs-on: ubuntu-latest
+ # deploy:
+ #   needs: update_and_deploy
+ #   runs-on: ubuntu-latest
   
-    steps:
-      - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+ #   steps:
+ #     - name: 📥 Checkout repository
+ #       uses: actions/checkout@v4
 
-      - name: 🚀 Deploy master branch root to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./
-          force_orphan: true  # 删除 gh-pages 历史记录，保持干净
+ #     - name: 🚀 Deploy master branch root to GitHub Pages
+ #       uses: peaceiris/actions-gh-pages@v3
+ #       with:
+ #         github_token: ${{ secrets.GITHUB_TOKEN }}
+ #         publish_branch: gh-pages
+ #         publish_dir: ./
+ #         force_orphan: true  # 删除 gh-pages 历史记录，保持干净
