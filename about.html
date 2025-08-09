@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>关于我</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    main::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+    body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;display:flex;min-height:100vh;color:#222;background:#fff;}
+    .sidebar{width:20rem;background:#2d3e50;color:#fff;padding:1.5rem 1.2rem;display:flex;flex-direction:column;align-items:flex-start;gap:2rem;min-height:100vh;}
+    .section{width:100%;}
+    .section h3{font-size:1rem;border-left:4px solid #00bfff;padding-left:0.5rem;margin-bottom:1rem;}
+    .avatar{text-align:center;width:100%;}
+    .avatar img{width:80px;height:80px;border-radius:50%;margin-bottom:0.5rem;}
+    .avatar a{color:#00bfff;text-decoration:none;font-size:0.95rem;}
+    .list,.skills,.hobbies{list-style:none;padding-left:0;font-size:0.92rem;}
+    .list li,.skills .skill-label,.hobbies li{display:flex;align-items:center;margin-bottom:0.6rem;}
+    .list a{color:#fff;}
+    .icon{width:1.8rem;text-align:center;margin-right:0.5rem;}
+    .progress-bar{background:#eee;border-radius:10px;overflow:hidden;height:8px;}
+    .progress{height:100%;background:#00bfff;}
+    .skill{margin-bottom:1rem;}
+    .main{flex:1;padding:2rem 3rem;overflow-y:auto;}
+    .main h1{font-size:1.6rem;margin-bottom:0.5rem;}
+    .main h2{color:#007acc;font-size:1.1rem;border-left:4px solid #007acc;padding-left:0.5rem;margin-top:2rem;margin-bottom:0.8rem;}
+    .main p{margin-bottom:1rem;line-height:1.6;}
+    .highlight{color:#007acc;font-weight:bold;font-size:1rem;}
+    .main ul{padding-left:1.5rem;margin-bottom:1rem;}
+    .main li{margin-bottom:0.5rem;}
+    strong{font-weight:bold;}
+    .hobbies-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem 1rem;list-style:none;padding-left:0;justify-items:center;font-size:0.75rem;}
+    .hobbies-grid li{display:flex;flex-direction:column;align-items:center;color:#fff;}
+    .hobbies-grid .emoji{font-size:2.5rem;}
+    @media(max-width:768px){
+      body{overflow:auto;flex-direction:column;}
+      .sidebar{width:100%;flex-wrap:wrap;justify-content:space-around;align-items:flex-start;gap:1.5rem;padding:1.5rem;}
+      aside{order:2;min-height:100vh;width:100vw}
+      main{order:1;height:100vh;width:100vw}
+      .sidebar .section{width:100%;}
+      .main{padding:1rem;width:100%;}
+      .main h1{font-size:1.3rem;}
+      .main h2{font-size:1rem;margin-top:1.5rem;}
+      .main p,.main li{font-size:0.9rem;}
+      .hobbies-grid .emoji{font-size:2rem;}
+    }
+    @media print {
+      body{margin: 0 auto; display: flex; flex-direction: row; font-color:#000 !important;background: #fff;}
+      .sidebar{width:15rem}
+      .avatar a, .print-btn { display: none !important; }
+    }
+
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="section avatar">
+      <img src="https://picsum.photos/300/300" alt="头像" />
+      <a href="index.html"style="display:block;margin-top:1rem;">主页</a>
+    </div>
+    <div class="section">
+      <h3>个人信息</h3>
+      <ul class="list">
+        <li><span class="icon">🎂</span>29 岁</li>
+        <li><span class="icon">📍</span>深圳</li>
+        <li><span class="icon">🎓</span>本科</li>
+        <li><span class="icon">📞</span><a href="tel:+8618668232691">18668232691</a></li>
+        <li><span class="icon">📧</span><a href="mailto:peter.li@88.com">peter.li@88.com</a></li>
+      </ul>
+    </div>
+    <div class="section">
+      <h3>技能</h3>
+      <div class="skills">
+        <div class="skill">
+          <div class="skill-label"><span class="icon">🖨️</span>RF</div>
+          <div class="progress-bar"><div class="progress" style="width:80%;"></div></div>
+        </div>
+        <div class="skill">
+          <div class="skill-label"><span class="icon">📊</span>Excel</div>
+          <div class="progress-bar"><div class="progress" style="width:90%;"></div></div>
+        </div>
+        <div class="skill">
+          <div class="skill-label"><span class="icon">💻</span>Shell</div>
+          <div class="progress-bar"><div class="progress" style="width:90%;"></div></div>
+        </div>
+        <div class="skill">
+          <div class="skill-label"><span class="icon">🐍</span>Python</div>
+          <div class="progress-bar"><div class="progress" style="width:70%;"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <h3>兴趣爱好</h3>
+      <ul class="hobbies-grid">
+        <li><span class="emoji">🏀</span><div>篮球</div></li>
+        <li><span class="emoji">🎧</span><div>音乐</div></li>
+        <li><span class="emoji">📖</span><div>阅读</div></li>
+        <li><span class="emoji">💻</span><div>电子</div></li>
+        <li><span class="emoji">🎬</span><div>电影</div></li>
+        <li><span class="emoji">⛰️</span><div>户外</div></li>
+      </ul>
+    </div>
+  </aside>
+  <main class="main">
+    <h1>Peter</h1>
+    <h2>职位</h2>
+    <p class="highlight">测试工程师 / RF工程师</p>
+    <p>拥有多年SMT设备维护经验，深入掌握NPM贴片机的调试、编程和维护，擅长优化生产流程和提升生产效率，具备丰富的故障诊断与设备维护经验，能够熟练实施技术改造与工艺改善，提升良率，确保生产效率与稳定性。</p>
+    <h2>核心技能</h2>
+    <ul>
+      <li>设备操作：熟练NPM贴片机、印刷机、回流焊等SMT设备，掌握设备参数设定与调试</li>
+      <li>问题分析：擅长运用鱼骨图、5Why等分析法定位问题</li>
+    </ul>
+    <h2>工作经验</h2>
+    <p><strong>2017.01–2025.06 富士康科技集团 / SMT设备技术员</strong></p>
+    <ul>
+      <li>负责NPM贴片机日常操作、调试维护，确保设备高效稳定运行</li>
+      <li>主导NPM程序编程与产线优化，提升贴片速度与稼动率</li>
+      <li>协助生产线异常处理与设备故障修复，优化设备使用率</li>
+      <li>培训操作员工，推广标准化操作流程</li>
+    </ul>
+    <h2>突出贡献</h2>
+    <ul>
+      <li>主导完成50+ SMT产线贴片设备优化与调试，提升效率超20%</li>
+      <li>处理超3000例贴片机运行异常，平均维修时间缩短35%</li>
+      <li>参与引入新机型（NPI）并完成整机验证，提高首件良率</li>
+    </ul>
+    <h2>自我评价</h2>
+    <ul>
+      <li>细致认真、责任感强，具备良好的团队协作与沟通能力</li>
+      <li>善于分析问题并持续学习，不断提升专业技能</li>
+    </ul>
+  </main>
+</body>
+</html>

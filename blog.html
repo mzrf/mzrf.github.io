@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>mz.blog</title>
+    <style type="text/css">
+        * { margin: 0; padding: 0; box-sizing: border-box;}
+        a{text-decoration: none;color:#0366d6;}
+        .hide{display:none !important}.show{transform: translateX(0);display:block !important;}
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        html::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+        body::-webkit-scrollbar, {display: none}
+        body{overflow: scroll;-ms-overflow-style: none;scrollbar-width: none;}
+        #toc::-webkit-scrollbar,body::-webkit-scrollbar,html::-webkit-scrollbar { display: none;}
+        nav { position: fixed; top: 0; left: 0; right: 0; height: 3rem; color: #222; background: #fdfdfd; display: flex; align-items: center; gap: 2rem; padding: 0 1rem; z-index: 1000; border-bottom: 1px solid #e0e0e0; }
+        nav a {color: #0366d6; display: flex; align-items: center; }
+        .label { margin-left: 0.3rem; font-size: 0.9rem; }
+        main { margin-top: 3rem; min-height: calc(100vh - 3rem); overflow-y: auto;padding:1rem; background: #f9f9f9; display: flex;justify-content: space-around; }
+        .aside {position: fixed;top:4rem;bottom:1rem;width:20rem;min-height:10rem;background:#fff;padding:1rem;border-radius: 0.5rem}
+        #toc{left:1rem;overflow-y:auto;}#right{right:1rem}
+        #toc a{display:inline-block;width:100%}
+        #toc li{list-style:no;padding:0.25rem;}
+        #toc a:hover{color: #1a5fd0;background:#e8f0fe;padding:0.5rem 0.25rem;}
+        #right li{list-style:none;}
+        #right a:hover{color: #1a5fd0;background:#e8f0fe;padding:0.5rem 0.25rem;}
+        #right a{display:flex;width:100%;justify-content:space-between;padding:0.25rem}
+        #right span{display:inline-block;}
+        #right i{display:inline-block;color:#777}
+        #toc li::marker{content:none}
+        /*#toc ul,#toc li{list-style:none;padding-left: 1rem;position: relative;}
+        #toc ul::before{content: '';position:absolute;top:0;left:0.5rem;bottom:0;width:1px;background:#ccc}
+        #toc ul>li{position:relative;padding-left:1rem;margin:0.5rem 0;cursor:pointer;}
+        #toc ul>li::before{content:'';position:absolute;top:0.5rem;left:0;width:0.5rem;height:1px;background:#ccc}
+        #toc li:hover{background:#f9f9f9;}*/
+        .main {width:calc(100vw - 44rem);padding:1rem;border-radius: 0.5rem}
+        .main img{display:block;margin:0 auto !important}
+        .mermaid { text-align: center; margin: 1rem 0; }
+        .preview pre { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+        .preview pre code { background: none; padding: 0; }
+        .katex { font-size: 1.1em; }
+        .katex-display { margin: 1rem 0; text-align: center;}
+        .mermaid svg { max-width: 100%; height: auto; }
+        #toctoggle{position:fixed;bottom:5rem;left:50%;transform:translate(-50%);font-size:2rem;display:block;border-radius:1.5rem;border:1px solid #e0e0e0;background:#d0d7de;opacity:0.9;width:3rem;height:3rem;text-align:center;text-decoration:none;}
+        #toctoggle:hover{opacity:1;}
+        #loading {position: fixed;width: 100%;height: 100%;background: white;top: 0;left: 0;z-index: 9999;display: flex;align-items: center;justify-content: center;}
+
+        /* 简单的旋转圆圈 */
+        /* .spinner {width: 50px;height: 50px;border: 5px solid #ccc;border-top-color: #3498db;border-radius: 50%;animation: spin 1s linear infinite;}*/
+        @media (max-width: 1380px) {
+            #toc{display:none}
+            #toctoggle{display:block !important}
+            main{justify-content:flex-start;}
+            .main{width:calc(100vw - 23rem)}
+        }
+        @media (max-width: 960px) {
+            #toc{display:none}
+            #toctoggle{display:block !important}
+            .main{width:calc(100vw - 2rem)}
+            #right{position:static;width:calc(100vw - 2rem);margin-top:1rem;}
+            main{justify-content:space-around;flex-wrap: wrap;}
+        }
+        @media (max-width: 600px) {
+            #toctoggle{display:block !important}
+            nav a{font-size:1.2rem}
+            nav { justify-content: space-around; }
+            nav .label { display: none; }
+            main{justify-content:space-around;flex-wrap: wrap;}
+            #toc{display:none;}
+            #preview{padding:0.5rem;font-size:14px !important}
+            .main,aside{width:calc(100vw - 1rem ),font-size:0.9rem}
+            .main ul{padding-left: 1rem !important}
+        }
+    </style>
+    <!-- CSS 库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/combine/npm/github-markdown-css@5.2.0/github-markdown-light.min.css,npm/highlight.js@11.8.0/styles/github.min.css,npm/katex@0.16.8/dist/katex.min.css">
+<!--   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-light.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css"> -->
+</head>
+<body>
+    <nav>
+        <a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
+        <a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
+        <a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
+        <a href="tool.html"><span class="icon">🔧</span><span class="label">工具</span></a>
+        <a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
+    </nav>
+    <a href="javascript:;"id="toctoggle"class="toctoggle hide">≡</a>
+    <main>
+        <div id="loading"><div class="spinner"><img src="./lib/loading.gif"/></div></div>
+        <aside class="aside"id="toc"></aside>
+        <div class="main preview markdown-body" id="preview"></div>
+        <aside class="aside"id="right"></aside>
+    </main>
+    <!-- JavaScript 库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.3.1/mermaid.min.js"></script> 
+    <script type="text/javascript">
+        window.addEventListener('load', function () {
+            const loading = document.getElementById('loading');
+            if (loading) {
+              loading.style.display = 'none';
+            }
+        });
+document.addEventListener('DOMContentLoaded', () => {
+    const toc = document.getElementById('toc');
+    const menuBtn = document.getElementById('toctoggle');
+
+    // 📌 菜单按钮点击逻辑：显示 TOC + 隐藏菜单按钮
+    if (menuBtn && toc) {
+        menuBtn.addEventListener('click', function (event) {
+            toc.classList.add("show");
+            menuBtn.classList.add("hide");
+            event.stopPropagation();
+        });
+    }
+
+    // 📌 页面全局点击：控制 TOC 隐藏、页面跳转等
+    document.addEventListener('click', function(event) {
+        if (!toc || !menuBtn) return;
+
+        const width = window.innerWidth;
+        const isTocLink = event.target.closest('#toc a');
+        const isToggleBtn = event.target.closest('#toctoggle');
+
+        if (width < 1380) {
+            if (!isTocLink && !isToggleBtn) {
+                toc.classList.remove("show");
+                menuBtn.classList.remove("hide");
+                return;
+            }
+
+            if (isTocLink) {
+                event.preventDefault();
+
+                const targetId = isTocLink.getAttribute('href').substring(1);
+                console.log(targetId);
+                const targetElement = document.getElementById(targetId);
+
+                if (targetElement) {
+                    const rect = targetElement.getBoundingClientRect();
+                    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    const offset = 4 * parseFloat(getComputedStyle(document.documentElement).fontSize); // 4rem
+                    const top = rect.top + scrollTop - offset;
+
+                    window.scrollTo({
+                        top: top,
+                        behavior: 'smooth'
+                    });
+                }
+
+                toc.classList.remove("show");
+                menuBtn.classList.remove("hide");
+            }
+        }
+    });
+}); // 🧩 补上这个右括号！！
+
+
+                   
+    // 📌 Markdown 渲染器类定义
+    class MarkdownRenderer {
+        constructor() {
+            this.preview = document.getElementById('preview');
+            this.tocElement = document.getElementById('toc');
+            this.mermaidCounter = 0;
+            this.initializeLibraries();
+            this.loadMarkdownFromURL();
+        }
+
+        // 初始化 marked、mermaid 配置
+        initializeLibraries() {
+            marked.setOptions({
+                highlight: function (code, lang) {
+                    if (lang && hljs.getLanguage(lang)) {
+                        try {
+                            return hljs.highlight(code, { language: lang }).value;
+                        } catch (err) {
+                            console.warn('语法高亮错误:', err);
+                        }
+                    }
+                    return hljs.highlightAuto(code).value;
+                },
+                breaks: true,
+                gfm: true,
+                headerIds: true,
+                headerPrefix: 'section-'
+            });
+
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: 'default',
+                themeVariables: {
+                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    fontSize: '14px'
+                },
+                flowchart: { useMaxWidth: true, htmlLabels: true },
+                sequence: { useMaxWidth: true, actorMargin: 50 }
+            });
+        }
+
+        // 加载 Markdown 内容
+        async loadMarkdownFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const mdFileName = params.get('p') || 'p/readme.md';
+
+            try {
+                const response = await fetch(mdFileName);
+                if (!response.ok) throw new Error(`无法加载文件 ${mdFileName}`);
+                const markdownText = await response.text();
+                this.render(markdownText);
+            } catch (error) {
+                console.error('加载失败:', error);
+                this.showError('加载错误', `无法加载文件 ${mdFileName}`);
+            }
+        }
+
+        // 渲染 Markdown + TOC
+        async render(markdown) {
+            if (!markdown.trim()) {
+                this.preview.innerHTML = '<div class="loading">请输入 Markdown 文本...</div>';
+                return;
+            }
+
+            // 渲染目录
+            const toc = this.generateTOC(markdown);
+            this.tocElement.innerHTML = toc;
+
+            // 预处理 mermaid 图
+            const processedMarkdown = this.preprocessMermaid(markdown);
+
+            // 渲染内容
+            let html = marked.parse(processedMarkdown);
+            html = await this.renderMath(html);
+            this.preview.innerHTML = html;
+
+            // 渲染 mermaid
+            await this.renderMermaid();
+        }
+
+        // 生成 TOC HTML
+        generateTOC(markdown) {
+            const headings = markdown.match(/^(#{1,6})\s(.+)$/gm);
+            if (!headings) return '<ul><li>没有发现标题</li></ul>';
+        
+            return headings.reduce((toc, heading) => {
+                const level = heading.match(/^#{1,6}/)[0].length;
+                const text = heading.replace(/^#{1,6}\s/, '');
+                // 保留中文，替换空格为 -，去除特殊字符（不删中文）
+                const id = 'section-' + text.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5\-]/g, '');
+                return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
+            }, '<ul>') + '</ul>';
+        }
+
+        
+        // 将 ```mermaid 代码块转换为 <div class="mermaid">
+        preprocessMermaid(markdown) {
+            this.mermaidCounter = 0;
+            return markdown.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, code) => {
+                const id = `mermaid-${this.mermaidCounter++}`;
+                return `<div class="mermaid" id="${id}">${code.trim()}</div>`;
+            });
+        }
+
+        // 渲染 mermaid 图
+        async renderMermaid() {
+            const mermaidElements = this.preview.querySelectorAll('.mermaid');
+            for (const element of mermaidElements) {
+                try {
+                    const graphDefinition = (element.textContent || '').trim();
+                    const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
+                    element.innerHTML = svg;
+                } catch (error) {
+                    console.error('Mermaid 渲染错误:', error);
+                    element.innerHTML = `<div class="error-message">
+                        <strong>Mermaid 图表渲染错误:</strong>
+                        ${error.message}
+                    </div>`;
+                }
+            }
+        }
+
+        // 渲染数学公式
+        async renderMath(html) {
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+
+                renderMathInElement(tempDiv, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$', right: '$', display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ],
+                    throwOnError: false,
+                    errorColor: '#cc0000',
+                    strict: 'ignore'
+                });
+
+                return tempDiv.innerHTML;
+            } catch (error) {
+                console.error('LaTeX 渲染错误:', error);
+                return html;
+            }
+        }
+
+        // 显示错误信息
+        showError(title, message) {
+            this.preview.innerHTML = `
+                <div class="error-message">
+                    <strong>${title}</strong>
+                    ${message}
+                </div>
+            `;
+        }
+    }
+
+    // 初始化渲染器
+    new MarkdownRenderer();
+
+    // 📌 加载 list.json 动态生成博客列表
+    // 📌 加载 list.json 动态生成博客列表
+    fetch('list.json')
+    .then(response => response.json())
+    .then(listData => {
+        // 确保 listData 是一个数组，并且其元素是对象
+        if (!Array.isArray(listData)) {
+            console.error('list.json is not an array.');
+            return;
+        }
+
+        // 按时间倒序排序 (基于 '2' 字段的日期)
+        listData.sort((a, b) => {
+            // 确保每个 item 都有 '2' 字段，并且是字符串，避免因数据不规范导致错误
+            const dateA = a && typeof a['2'] === 'string' ? new Date(a['2']) : new Date(0); // 默认一个很早的日期
+            const dateB = b && typeof b['2'] === 'string' ? new Date(b['2']) : new Date(0); // 默认一个很早的日期
+            return dateB - dateA; // 降序排列 (最新在前)
+        });
+
+        // 获取最新 10 条
+        const latestBlogs = listData.slice(0, 10);
+        const latestContainer = document.getElementById('right'); // 假设这是您要插入列表的容器
+        if (!latestContainer) {
+            console.error('Container element with ID "right" not found.');
+            return;
+        }
+        latestContainer.innerHTML = ''; // 清空现有内容
+
+        latestBlogs.forEach(blog => {
+            // 确保 blog 是一个对象并且包含 '1' 和 '2' 字段
+            if (typeof blog !== 'object' || blog === null || !blog.hasOwnProperty('1') || !blog.hasOwnProperty('2')) {
+                console.warn('Skipping invalid blog entry:', blog);
+                return;
+            }
+
+            const fileName = blog['1']; // 从对象的 '1' 键获取文件名
+            const date = new Date(blog['2']); // 从对象的 '2' 键获取日期
+
+            // 格式化日期为 MM-DD
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const formattedDate = `${month}-${day}`;
+
+            const listItem = document.createElement('li');
+            // 注意：encodeURIComponent(fileName) 对于 URL 参数是重要的，以防文件名包含特殊字符
+            listItem.innerHTML = `<a href="blog.html?p=p/${encodeURIComponent(fileName)}"><span>${fileName}</span><i class="date">${formattedDate}</i></a>`;
+            latestContainer.appendChild(listItem);
+        });
+    })
+    .catch(error => {
+        console.error('Error loading list.json:', error);
+        // 可以添加一个用户友好的错误消息到页面上
+        const latestContainer = document.getElementById('right');
+        if (latestContainer) {
+            latestContainer.innerHTML = '<li>加载博客列表失败。</li>';
+        }
+    });
+</script>
+</body>
+</html>

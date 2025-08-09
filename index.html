@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>mz.blog</title>
+	<style type="text/css">
+		* { margin: 0; padding: 0; box-sizing:border-box;}
+		body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif}
+		nav{position:fixed; top:0;left:0;right:0;height:3rem;color:#222;background:#fdfdfd;display:flex;align-items:center;gap:2rem;padding:0 1rem;z-index:1000;border-bottom:1px solid #e0e0e0;}
+		nav a{text-decoration:none;color:#0366d6;display:flex;align-items:center;}
+		#latest a{text-decoration:none;color:#0366d6;}
+		.label{margin-left:0.3rem;font-size:0.9rem}
+		main{margin-top:3rem;height:calc(100vh - 3rem);overflow-y:auto;padding:1rem;background:#f9f9f9}
+		h1{text-align:center;margin-top:10rem}
+		p{text-align:center;margin:2rem 0 10rem 0}
+		section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem;max-width:960px;margin:0 auto}
+		#latest a{display:flex;gap:1rem;padding:0.5rem}
+		#latest li{list-style:none}
+		#latest span,.latest i{display: inline-block}
+		#latest i{color:#777}
+		#latest a:hover{background:#e8f0fe}
+		@media (max-width: 600px){
+			nav a{font-size:1.2rem}
+			nav {justify-content:space-around;}
+			nav .label{display:none}
+			li i{display:none;}
+		}
+	</style>
+</head>
+<body>
+	<nav>
+		<a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
+		<a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
+		<a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
+		<a href="tool.html"><span class="icon">🔧</span><span class="label">工具</span></a>
+		<a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
+	</nav>
+	<main>
+		<h1>Hello World!</h1>
+		<p>这里记录了我思考与探索的点滴。</p>
+		<section id="latest">
+			<div>加载中</div>
+		</section>
+	</main>
+</body>
+<script type="text/javascript">
+	fetch('list.json')
+	  .then(res => res.json())
+	  .then(list => {
+        // 确保 list 是一个数组
+        if (!Array.isArray(list)) {
+            console.error('Error: list.json content is not an array.');
+            return;
+        }
+
+	    // 对列表进行排序，确保最新的项目在末尾，以便slice(-3)正确获取。
+	    // 假设 '2' 字段是日期字符串，可以按字符串直接比较，或者转换为Date对象比较
+	    // 注意：如果您的 Python 脚本已经按日期倒序排序了，这一行可以移除
+	    list.sort((a, b) => a['2'].localeCompare(b['2'])); // 按日期升序排序
+
+	    const latest = list.slice(-3).reverse(); // 获取最新的3个并反转顺序
+
+	    const container = document.getElementById('latest');
+        if (!container) {
+            console.error('Error: Element with ID "latest" not found.');
+            return;
+        }
+       container.innerHTML = latest.map(item => { // <-- 关键修改：这里不再使用数组解构
+            // 从对象中获取文件名和日期
+	        const name = item['1']; 
+	        const date = item['2'];
+            // 如果需要显示标签，可以访问 item['3']，例如：
+            // const tags = item['3'] && Array.isArray(item['3']) ? item['3'].map(tag => `#${tag}`).join(' ') : '';
+	        return `<li><a href="blog.html?p=p/${encodeURIComponent(name)}"><span>${name}</span><i>${date}</i></a></li>`;
+	    }).join('');
+      })
+	  .catch(error => {
+	    console.error('Error fetching or parsing list.json:', error);
+	    const container = document.getElementById('latest');
+	    if (container) {
+            container.innerHTML = '<div>加载内容失败，请稍后再试。</div>';
+        }
+	  });
+</script>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>mz.blog</title>
+	<style type="text/css">
+* { margin: 0; padding: 0; box-sizing:border-box;}
+body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;background:#f9f9f9}
+nav{position:fixed; top:0;left:0;right:0;height:3rem;color:#222;background:#fdfdfd;display:flex;align-items:center;gap:2rem;padding:0 1rem;z-index:1000;border-bottom:1px solid #e0e0e0;}
+nav a{text-decoration:none;color:#0366d6;display:flex;align-items:center;}
+.label{margin-left:0.3rem;font-size:0.9rem}
+main{width:calc(100vw - 44rem);margin:3rem auto 0 auto;height:calc(100vh - 3rem);overflow-y:auto;padding:1rem;}
+ul{list-style: none; padding-left:1rem; position: relative;display:inline-block; }
+ul::before { content: ''; position: absolute; top: 0; left: 0.75rem; bottom: 0; width: 3px; background: #ccc; }
+ul > li { position: relative; padding-left: 1rem; margin: 0.5rem 0; cursor: pointer;}
+.nested a{display:flex;justify-content:space-between;padding:0.25rem 1rem;}
+.nested a:hover{background-color: #eef;}
+
+.nested > li::before {position: absolute;top: 0.75rem; left:-0.2rem; width: 0.5rem; height: 1px; background: #ccc;content:'' }
+.nested::before{width:1px}
+.folder { color: #224488; font-weight: bold; }
+.file span,.file i{display:inline-block;}
+.file i{margin-left:1rem;color:#777;font-weight:normal;}
+.nested { display: none; padding-left: 1rem; margin-left: 0.5rem;}
+.active > .nested { display: block; }
+a { text-decoration: none; color: #015ecc; }
+h1,p{text-align:center;margin-top:10rem}
+p{text-align:center;margin:2rem 0 10rem 0}
+section{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;min-height:5rem}
+@media (max-width: 1280px) {
+    main{width:calc(100vw - 10rem )}
+}
+@media (max-width: 960px) {
+    main{width:100vw}
+    ul > li {padding-left: 0.5rem;}
+    .nested a{display:flex;justify-content:space-between;padding:0.25rem;}
+}
+@media (max-width: 600px){
+	nav a{font-size:1.2rem}
+	nav {justify-content:space-around;}
+	nav .label{display:none}
+}
+	</style>
+</head>
+<body>
+	<nav>
+		<a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
+		<a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
+		<a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
+		<a href="tool.html"><span class="icon">🔧</span><span class="label">工具</span></a>
+		<a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
+	</nav>
+	<main class="main">
+		<ul class="tree"id="tree"></ul>
+	</main>
+</body>
+<script>
+	document.addEventListener('DOMContentLoaded', function () {
+    // 从 list.json 动态加载数据
+    fetch('list.json')
+        .then(response => response.json())
+        .then(listData => {
+            // 确保 listData 是一个数组
+            if (!Array.isArray(listData)) {
+                console.error('Error: list.json content is not an array.');
+                return;
+            }
+
+            const tree = document.getElementById('tree'); // 获取树形目录的父容器
+            if (!tree) {
+                console.error('Error: Container element with ID "tree" not found.');
+                return;
+            }
+            tree.innerHTML = ''; // 清空现有内容，以防重复加载
+
+            // **Step 1: Group articles by year**
+            const groupedByYear = {};
+            listData.forEach(item => {
+                // Ensure each item is a valid object and contains required fields
+                if (typeof item !== 'object' || item === null || !item.hasOwnProperty('1') || !item.hasOwnProperty('2')) {
+                    console.warn('Skipping invalid list item entry:', item);
+                    return;
+                }
+                const year = new Date(item['2']).getFullYear();
+                if (!groupedByYear[year]) {
+                    groupedByYear[year] = [];
+                }
+                groupedByYear[year].push(item);
+            });
+
+            // **Step 2: Sort years in descending order (latest year first)**
+            const sortedYears = Object.keys(groupedByYear).sort((a, b) => b - a);
+
+            // **Step 3: Create and append year nodes and their nested lists**
+            sortedYears.forEach(year => {
+                const yearNode = document.createElement('li');
+                // By default, folders are collapsed. You can add 'active' to yearNode.classList if you want to expand all initially.
+                yearNode.classList.add('folder', 'toggle');
+                yearNode.innerHTML = `📁 ${year}`;
+
+                const nestedList = document.createElement('ul');
+                nestedList.classList.add('tree', 'nested');
+                nestedList.style.display = 'none'; // Initially hide nested list
+
+                // **Step 4: Add click event for toggle functionality to each yearNode**
+                yearNode.addEventListener('click', function (event) {
+                    event.stopPropagation(); // Prevent event from bubbling up to parent folders if any
+                    this.classList.toggle('active'); // Toggle 'active' class for styling
+                    const childUl = this.querySelector('ul.nested');
+                    if (childUl) {
+                        childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none'; // Toggle display
+                    }
+                });
+
+                // **Step 5: Sort files within the current year by date in descending order**
+                // (Latest article first within each year's list)
+                const fileListForYear = groupedByYear[year].sort((a, b) => new Date(b['2']) - new Date(a['2']));
+
+                // **Step 6: Iterate through files for the current year and create file nodes**
+                fileListForYear.forEach(file => {
+                    const fileNode = document.createElement('li');
+                    const fileName = file['1']; // Access filename using key '1'
+                    const rawDate = file['2'];   // Access date string using key '2'
+                    const date = new Date(rawDate); // Convert to Date object
+
+                    // Format date to MM-DD
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const formattedDate = `${month}-${day}`;
+
+                    // Using encodeURIComponent for the filename in the URL to handle special characters
+                    fileNode.innerHTML = `<a class="file" href="blog.html?p=p/${encodeURIComponent(fileName)}"><span>${fileName}</span> <i class="comment">${formattedDate}</i></a>`;
+                    nestedList.appendChild(fileNode);
+                });
+
+                yearNode.appendChild(nestedList); // Append the nested file list to the year node
+                tree.appendChild(yearNode);       // Append the year node to the main tree container
+		const firstToggle = document.querySelector('.toggle');
+		if (firstToggle) {
+		    firstToggle.classList.add('active');
+		    const childUl = firstToggle.querySelector('ul.nested');
+		    if (childUl) {
+		        childUl.style.display = 'block'; // 显示第一个年目录下的列表
+		    }
+		}
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching or parsing list.json:', error);
+            const tree = document.getElementById('tree');
+            if (tree) {
+                tree.innerHTML = '<li>加载归档列表失败。</li>';
+            }
+        });
+});
+
+</script>
+</html>
