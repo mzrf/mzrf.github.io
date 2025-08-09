@@ -22,8 +22,8 @@
         margin-left: auto; 
         margin-right: auto; 
     }
-    pre{padding: 0.5rem;font-size:0.8rem;}
-    pre>code,pre span{white-space: pre-wrap;overflow-wrap: break-word;word-wrap: break-word;padding:0}
+    pre{padding: 0.5rem !important;font-size:0.8rem  !important;}
+    pre>code,pre span{white-space: pre-wrap !important;overflow-wrap: break-word !important;word-wrap: break-word !important;padding:0 !important}
     /* 核心修复：为 marked.js 渲染的内容设置样式类 max-width: 980px; */
     .markdown-body {
         box-sizing: border-box;
@@ -36,9 +36,9 @@
       nav { justify-content: space-around; }
       nav .label { display: none; }
       main{
-        padding:0;
+        padding:0 !important;
       }
-      .markdown-body {padding:0.5rem}
+      .markdown-body {padding:0.5rem !important;}
     }
   </style>
 </head>
