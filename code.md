@@ -44,7 +44,12 @@ fi
 
 > 用于在macOS下创建自动运行脚本
 ```bash
-# 开始命令:
+
+# 定时任务开始命令: 
+# launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist" 
+
+# 定时任务结束命令: 
+# launchctl unload "$HOME/Library/LaunchAgents/com.user.myscript.plist" 
 
 # 直接复制脚本, 配置要运行的命令到/vault/myscript.sh
 # 定时任务设置为固定时间运行 6:55
@@ -92,5 +97,5 @@ launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist"
 
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTcyMzk2MzAwMyw2NjcwNTQwNjFdfQ==
+eyJoaXN0b3J5IjpbLTIwMDM2MDQ4NzYsNjY3MDU0MDYxXX0=
 -->
