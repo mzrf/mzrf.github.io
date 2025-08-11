@@ -97,5 +97,5 @@ launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist"
 
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwMDM2MDQ4NzYsNjY3MDU0MDYxXX0=
+eyJoaXN0b3J5IjpbLTIwMDM2MDQ4NzZdfQ==
 -->
