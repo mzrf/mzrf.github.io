@@ -39,6 +39,54 @@ else
 	uncompress "$dname"
 fi
 ```
+
+### macos 下设置自动运行脚本
+> 用于在macOS下创建自动运行脚本
+```bash
+
+
+mkdir -p "$HOME/Library/LaunchAgents"
+
+cat > "$HOME/Library/LaunchAgents/com.user.myscript.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.myscript</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/vault/myscript.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>6</integer>
+        <key>Minute</key>
+        <integer>55</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>$HOME/myscript.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>$HOME/myscript.log</string>
+</dict>
+</plist>
+EOF
+
+chmod +x /vault/myscript.sh
+launchctl unload "$HOME/Library/LaunchAgents/com.user.myscript.plist" 2>/dev/null
+launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist"
+
+```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNjY3MDU0MDYxXX0=
+eyJoaXN0b3J5IjpbMTIzOTA1NDU1Nyw2NjcwNTQwNjFdfQ==
 -->
