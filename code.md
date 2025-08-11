@@ -41,13 +41,16 @@ fi
 ```
 
 ### macos 下设置自动运行脚本
+
 > 用于在macOS下创建自动运行脚本
 ```bash
+# 开始命令:
+
 # 直接复制脚本, 配置要运行的命令到/vault/myscript.sh
 # 定时任务设置为固定时间运行 6:55
 # 定时任务log输出位置为$HOME/myscript.log
-mkdir -p "$HOME/Library/LaunchAgents"
 
+mkdir -p "$HOME/Library/LaunchAgents"
 cat > "$HOME/Library/LaunchAgents/com.user.myscript.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
@@ -89,5 +92,5 @@ launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist"
 
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwMzE1OTcxMjAsNjY3MDU0MDYxXX0=
+eyJoaXN0b3J5IjpbMTcyMzk2MzAwMyw2NjcwNTQwNjFdfQ==
 -->
