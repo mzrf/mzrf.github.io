@@ -44,7 +44,6 @@ fi
 > 用于在macOS下创建自动运行脚本
 ```bash
 
-
 mkdir -p "$HOME/Library/LaunchAgents"
 
 cat > "$HOME/Library/LaunchAgents/com.user.myscript.plist" <<EOF
@@ -88,5 +87,5 @@ launchctl load "$HOME/Library/LaunchAgents/com.user.myscript.plist"
 
 ```
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTIzOTA1NDU1Nyw2NjcwNTQwNjFdfQ==
+eyJoaXN0b3J5IjpbLTIwMzAyNDc4MjUsNjY3MDU0MDYxXX0=
 -->
