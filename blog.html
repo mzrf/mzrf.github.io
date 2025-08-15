@@ -271,18 +271,21 @@ document.addEventListener('DOMContentLoaded', () => {
         async renderMermaid() {
             const mermaidElements = this.preview.querySelectorAll('.mermaid');
             for (const element of mermaidElements) {
+                const graphDefinition = (element.textContent || '').trim();
                 try {
-                    const graphDefinition = (element.textContent || '').trim();
                     const { svg } = await mermaid.render(element.id + '-svg', graphDefinition);
                     element.innerHTML = svg;
                 } catch (error) {
                     console.error('Mermaid 渲染错误:', error);
-
-                    // <strong>Mermaid 图表渲染错误:</strong>
-                    //    ${error.message}
-                    element.innerHTML = `<div class="error-message">
-                       graphDefinition
-                    </div>`;
+        
+                    // 隐藏当前 mermaid 元素内可能生成的 SVG
+                    const svgEl = document.getElementById(element.id + '-svg');
+                    if (svgEl) {
+                        svgEl.style.display = 'none';
+                    }
+        
+                    // 显示原始代码块
+                    element.innerHTML = `<pre class="mermaid-error"><code>${graphDefinition}</code></pre>`;
                 }
             }
         }
