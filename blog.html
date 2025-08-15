@@ -277,9 +277,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     element.innerHTML = svg;
                 } catch (error) {
                     console.error('Mermaid 渲染错误:', error);
+
+                    // <strong>Mermaid 图表渲染错误:</strong>
+                    //    ${error.message}
                     element.innerHTML = `<div class="error-message">
-                        <strong>Mermaid 图表渲染错误:</strong>
-                        ${error.message}
+                       graphDefinition
                     </div>`;
                 }
             }
