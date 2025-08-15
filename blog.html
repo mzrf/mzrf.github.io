@@ -260,11 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // 将 ```mermaid 代码块转换为 <div class="mermaid">
         preprocessMermaid(markdown) {
             this.mermaidCounter = 0;
-            return markdown.replace(/```mermaid\n([\s\S]*?)\n```/g, (match, code) => {
+            return markdown.replace(/```mermaid\s*\r?\n([\s\S]*?)\r?\n```/g, (match, code) => {
                 const id = `mermaid-${this.mermaidCounter++}`;
                 return `<div class="mermaid" id="${id}">${code.trim()}</div>`;
             });
         }
+
 
         // 渲染 mermaid 图
         async renderMermaid() {
