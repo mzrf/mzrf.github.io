@@ -251,7 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const level = heading.match(/^#{1,6}/)[0].length;
                 const text = heading.replace(/^#{1,6}\s/, '');
                 // 保留中文和所有符号，只替换空格为 -
-                const rawId = 'section-' + text.trim().replace(/\s+/g, '-');
+                const rawId = 'section-' + text.trim()
+                    .replace(/\s+/g, '-')   // 空格 → -
+                    .replace(/\./g, '');    // 删除 .
                 // 对 ID 进行 URL 安全编码
                 const safeId = encodeURIComponent(rawId);
                 return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${safeId}">${text}</a></li>`;
