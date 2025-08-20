@@ -254,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const id = 'section-' + text.trim()
                     .replace(/\s+/g, '-')   // 空格 → -
                     .replace(/\./g, '')    // 删除 .
+                    .replace(/\//g, '')    // 删除 /
                     .toLowerCase();
                 return toc + `<li style="margin-left: ${level - 1}em;"><a href="#${id}">${text}</a></li>`;
             }, '<ul>') + '</ul>';
