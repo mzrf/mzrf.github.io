@@ -8,7 +8,7 @@
 - [windows激活](https://kms.cx)
 
 ## AI工具
-- [文本转图像]
+- [文本转图像](https://www.picdoc.cn/)
 
 ## Tool
 - [图片url转编码](https://mzrf.github.io/lib/url2base64.html)
@@ -18,5 +18,5 @@
 - [一行代码](https://mzrf.github.io/lib/code.html)
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTY4ODA5NzU0LC0yMzIxMzA1MjldfQ==
+eyJoaXN0b3J5IjpbMTAxNDI4MDM1NV19
 -->
