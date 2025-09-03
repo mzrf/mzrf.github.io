@@ -6,6 +6,7 @@
 - [JSON Formatter](https://jsonformatter.org)
 - [RegEx101](https://regex101.com)
 - [windows激活](https://kms.cx)
+- [朋友圈点赞](http://zan.liflag.cn/)
 
 ## AI工具
 - [文本转图像](https://www.picdoc.cn/)
@@ -18,5 +19,5 @@
 - [一行代码](https://mzrf.github.io/lib/code.html)
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTAxNDI4MDM1NV19
+eyJoaXN0b3J5IjpbLTE3MjE3NzQ1NDRdfQ==
 -->
