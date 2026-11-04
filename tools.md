@@ -3,6 +3,7 @@
 - [GitHub](https://github.com)
 
 ## 在线工具
+- [基金查看](https://mzrf.github.io/fund.html)
 - [JSON Formatter](https://jsonformatter.org)
 - [RegEx101](https://regex101.com)
 - [windows激活](https://kms.cx)
