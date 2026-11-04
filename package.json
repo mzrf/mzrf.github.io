@@ -1,0 +1,9 @@
+{
+  "name": "fund-dashboard",
+  "private": true,
+  "version": "1.0.0",
+  "description": "基金涨跌幅、历史分位与估值星级静态站点",
+  "scripts": {
+    "build": "node scripts/build-data.mjs"
+  }
+}

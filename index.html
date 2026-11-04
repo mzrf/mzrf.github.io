@@ -1,88 +1,581 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>mz.blog</title>
-	<style type="text/css">
-		* { margin: 0; padding: 0; box-sizing:border-box;}
-		body{font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif}
-		nav{position:fixed; top:0;left:0;right:0;height:3rem;color:#222;background:#fdfdfd;display:flex;align-items:center;gap:2rem;padding:0 1rem;z-index:1000;border-bottom:1px solid #e0e0e0;}
-		nav a{text-decoration:none;color:#0366d6;display:flex;align-items:center;}
-		#latest a{text-decoration:none;color:#0366d6;}
-		.label{margin-left:0.3rem;font-size:0.9rem}
-		main{margin-top:3rem;height:calc(100vh - 3rem);overflow-y:auto;padding:1rem;background:#f9f9f9;display:flex;flex-direction:column;flex-wrap: nowrap;justify-content:center;}
-		h1{text-align:center;}
-		p{text-align:center;margin:2rem 0 5rem 0}
-		#latest{unicode-bidi: isolate;border-radius:0.5rem;background:#fff;border:1px solid #e6e6e6;padding:1rem;width: calc(100vw - 2rem);min-height:5rem;max-width:960px;margin:0 auto}
-		#latest a{display:flex;gap:1rem;padding:0.5rem}
-		#latest li{list-style:none}
-		#latest span,.latest i{display: inline-block}
-		#latest i{color:#777}
-		#latest a:hover{background:#e8f0fe}
-		@media (max-width: 600px){
-			nav a{font-size:1.2rem}
-			nav {justify-content:space-around;}
-			nav .label{display:none}
-			li i{display:none;}
-		}
-	</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>基金盯盘台 · 涨跌幅 / 历史分位 / 估值星级</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20fill='%23F3F2ED'/%3E%3Cpath%20d='M5%2023L12%2014L17%2018L27%207'%20stroke='%2314201B'%20stroke-width='2.6'%20fill='none'/%3E%3Ccircle%20cx='27'%20cy='7'%20r='2.6'%20fill='%23B0342C'/%3E%3C/svg%3E">
+<script src="https://fastly.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="data/funds.js"></script>
+<style>
+  :root{
+    --ink:#14201B; --ink-2:#3B4A43; --muted:#6E7A72;
+    --paper:#F3F2ED; --card:#FFFFFF; --line:#DAD8CE; --line-2:#E7E5DC;
+    --rise:#B0342C; --fall:#2C6B50; --gold:#A9873F;
+    --r:2px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font:400 15px/1.6 -apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+  h1,h2,h3{margin:0;font-weight:600}
+  .serif{font-family:"Source Han Serif SC","Songti SC","Noto Serif CJK SC",Georgia,serif}
+  a{color:inherit}
+
+  /* ===== 报头 ===== */
+  header.masthead{border-bottom:1px solid var(--ink);background:var(--paper)}
+  .mh-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 18px;padding:20px 0 12px}
+  .mh-title{font-size:27px;letter-spacing:.02em;line-height:1.25}
+  .mh-sub{font-size:12.5px;color:var(--muted);line-height:1.7}
+  .mh-meta{margin-left:auto;font-size:12.5px;color:var(--muted);text-align:right;line-height:1.7}
+  .tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{
+    appearance:none;background:none;border:0;border-bottom:2px solid transparent;
+    padding:10px 14px 9px;margin-bottom:-2px;cursor:pointer;text-align:left;
+    font:500 14px/1.4 inherit;color:var(--muted);white-space:nowrap;
+    transition:color .15s,border-color .15s;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .tab small{display:block;font-size:11.5px;font-weight:400;letter-spacing:.04em;color:var(--muted);margin-top:1px}
+  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:700}
+
+  /* ===== 聚焦基金 ===== */
+  .lede{padding:26px 0 18px;border-bottom:1px solid var(--line);display:grid;gap:18px}
+  .lede-name{font-size:22px;line-height:1.35}
+  .lede-code{font-size:12.5px;color:var(--muted);letter-spacing:.06em;margin-top:4px}
+  .lede-right{display:grid;gap:10px}
+  .stars{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+  .star-row{display:flex;gap:4px}
+  .star{width:11px;height:11px;background:var(--gold);transform:rotate(45deg);border-radius:1px}
+  .star.off{background:transparent;border:1px solid var(--line)}
+  .star-num{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+  .pbar{margin-top:2px}
+  .pbar-track{position:relative;height:7px;background:var(--line-2);border-radius:1px}
+  .pbar-fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,rgba(44,107,80,.25),rgba(176,52,44,.25))}
+  .pbar-mark{position:absolute;top:-4px;width:2px;height:15px;background:var(--ink)}
+  .pbar-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+  .pbar-mid{font-size:12.5px;color:var(--ink-2);margin-top:4px}
+  .pbar-mid b{font-weight:700}
+
+  /* ===== 指标条 ===== */
+  .strip{display:grid;grid-template-columns:repeat(2,1fr);gap:0;border-bottom:1px solid var(--line)}
+  .cell{padding:15px 0;border-right:1px solid var(--line-2);padding-right:12px}
+  .cell:last-child{border-right:0}
+  .cell:nth-child(2n){padding-left:14px;border-right:0}
+  .cell-k{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+  .cell-v{font-size:19px;font-weight:700;letter-spacing:-.01em;margin-top:3px;line-height:1.25}
+  .cell-x{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .up{color:var(--rise)} .down{color:var(--fall)}
+
+  /* ===== 区块 ===== */
+  section.block{padding:24px 0 6px}
+  .block-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 14px;margin-bottom:12px}
+  .block-title{font-size:16px;font-weight:600}
+  .block-note{font-size:12px;color:var(--muted);line-height:1.6}
+  .chart{width:100%;height:280px;background:var(--card);border:1px solid var(--line-2)}
+  .chart.tall{height:330px}
+  .chart.short{height:250px}
+  .grid2{display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line-2);padding:16px 16px 14px}
+  .card-k{font-size:11.5px;color:var(--muted)}
+  .card-v{font-size:25px;font-weight:700;line-height:1.2;margin-top:4px;letter-spacing:-.015em}
+  .dca-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .dca-line{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-2);font-size:13px;color:var(--ink-2);line-height:1.65}
+  .dca-line b{font-weight:700}
+
+  /* ===== 表格 ===== */
+  .table-wrap{background:var(--card);border:1px solid var(--line-2);overflow:auto}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13.5px}
+  col.c1{width:40%} col.c2{width:30%} col.c3{width:30%}
+  thead th{
+    text-align:right;font-weight:600;font-size:12px;color:var(--muted);
+    padding:9px 14px;border-bottom:1px solid var(--line);background:#FAF9F5;white-space:nowrap;
+  }
+  thead th:first-child{text-align:left}
+  tbody td{padding:8px 14px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap}
+  tbody td:first-child{text-align:left;color:var(--ink-2)}
+  tbody tr:last-child td{border-bottom:0}
+
+  footer{margin-top:34px;border-top:1px solid var(--ink);padding:18px 0 40px}
+  .foot-grid{display:grid;gap:10px;font-size:12px;color:var(--muted);line-height:1.75}
+  .disclaimer{margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.8;max-width:78ch}
+  .empty{background:var(--card);border:1px solid var(--line);padding:22px;font-size:14px;color:var(--ink-2);line-height:1.8}
+  .empty code{background:#F1EFE8;padding:1px 5px;font-size:12.5px}
+
+  @media (min-width:760px){
+    .wrap{padding:0 28px}
+    .mh-title{font-size:32px}
+    .lede{grid-template-columns:1fr 320px;align-items:end;padding:32px 0 22px}
+    .strip{grid-template-columns:repeat(4,1fr)}
+    .cell{padding:18px 0 18px 0}
+    .cell:nth-child(2n){padding-left:0}
+    .cell{border-right:1px solid var(--line-2);padding-left:18px}
+    .cell:first-child{padding-left:0}
+    .cell:last-child{border-right:0}
+    .chart{height:340px}
+    .chart.tall{height:380px}
+    .grid2{grid-template-columns:1fr 1fr;gap:22px}
+    .dca-grid{grid-template-columns:repeat(4,1fr)}
+  }
+</style>
 </head>
 <body>
-	<nav>
-		<a href="index.html"><span class="icon">🏠</span><span class="label">主页</span></a>
-		<a href="blog.html"><span class="icon">📘</span><span class="label">博客</span></a>
-		<a href="archive.html"><span class="icon">📚</span><span class="label">归档</span></a>
-		<a href="tool.html"><span class="icon">🔧</span><span class="label">工具</span></a>
-		<a href="about.html"><span class="icon">👤</span><span class="label">关于</span></a>
-	</nav>
-	<main>
-		<div>
-			<h1>Hello World!</h1>
-			<p>这里记录了我思考与探索的点滴。</p>
-		</div>
-		<div id="latest">
-			<div>加载中</div>
-		</div>
-	</main>
-</body>
-<script type="text/javascript">
-	fetch('list.json')
-	  .then(res => res.json())
-	  .then(list => {
-        // 确保 list 是一个数组
-        if (!Array.isArray(list)) {
-            console.error('Error: list.json content is not an array.');
-            return;
-        }
 
-	    // 对列表进行排序，确保最新的项目在末尾，以便slice(-3)正确获取。
-	    // 假设 '2' 字段是日期字符串，可以按字符串直接比较，或者转换为Date对象比较
-	    // 注意：如果您的 Python 脚本已经按日期倒序排序了，这一行可以移除
-	    // list.sort((a, b) => a['2'].localeCompare(b['2'])); // 按日期升序排序
+<header class="masthead">
+  <div class="wrap">
+    <div class="mh-top">
+      <div>
+        <h1 class="mh-title serif">基金盯盘台</h1>
+        <div class="mh-sub">单位净值涨跌幅 · 历史分位 · 估值星级 · 周定投回测</div>
+      </div>
+      <div class="mh-meta" id="meta">数据加载中</div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="基金列表"></nav>
+  </div>
+</header>
 
-	    const latest = list.slice(-3).reverse(); // 获取最新的3个并反转顺序
+<main class="wrap" id="main">
+  <div id="empty" class="empty" hidden>
+    未读到数据文件 <code>data/funds.js</code>。<br>
+    这个页面依赖同目录的数据文件，请确认 <code>data/funds.js</code> 存在；若刚克隆仓库，先在本地运行
+    <code>node scripts/build-data.mjs</code> 生成一次数据。
+  </div>
+  <div id="content">
+    <section class="lede" aria-labelledby="fundName">
+      <div>
+        <div class="lede-code" id="fundCode"></div>
+        <h2 class="lede-name serif" id="fundName"></h2>
+        <div class="lede-code" id="fundSpan"></div>
+      </div>
+      <div class="lede-right">
+        <div class="stars" id="stars"></div>
+        <div class="pbar">
+          <div class="pbar-track"><div class="pbar-fill"></div><div class="pbar-mark" id="pMark"></div></div>
+          <div class="pbar-label"><span>历史最低</span><span>历史最高</span></div>
+          <div class="pbar-mid" id="pText"></div>
+        </div>
+      </div>
+    </section>
 
-	    const container = document.getElementById('latest');
-        if (!container) {
-            console.error('Error: Element with ID "latest" not found.');
-            return;
+    <section class="strip" id="strip" aria-label="关键指标"></section>
+
+    <section class="block" aria-labelledby="t1">
+      <div class="block-head">
+        <h3 class="block-title" id="t1">近五年净值走势</h3>
+        <div class="block-note" id="navNote"></div>
+      </div>
+      <div class="chart tall" id="chartNav" role="img" aria-label="近五年单位净值走势折线图"></div>
+    </section>
+
+    <section class="block">
+      <div class="grid2">
+        <div>
+          <div class="block-head">
+            <h3 class="block-title">年度收益</h3>
+            <div class="block-note">浅色为首末不完整年度</div>
+          </div>
+          <div class="chart" id="chartYear" role="img" aria-label="各年度收益率柱状图"></div>
+        </div>
+        <div>
+          <div class="block-head">
+            <h3 class="block-title">区间涨跌幅</h3>
+            <div class="block-note" id="rangeNote">按交易日与自然日回溯计算</div>
+          </div>
+          <div class="chart" id="chartRange" role="img" aria-label="各区间涨跌幅条形图"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="t3">
+      <div class="block-head">
+        <h3 class="block-title" id="t3">周定投回测</h3>
+        <div class="block-note">每周一投 100 元，按当日单位净值买入，不计申赎费用</div>
+      </div>
+      <div class="card">
+        <div class="dca-grid" id="dcaGrid"></div>
+        <div class="dca-line" id="dcaLine"></div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="t4">
+      <div class="block-head">
+        <h3 class="block-title" id="t4">历史涨跌幅记录</h3>
+        <div class="block-note">最近 30 个交易日</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+          <thead><tr><th>日期</th><th>单位净值</th><th>日涨跌幅</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div id="ruleText"></div>
+      <div>
+        净值分位＝当前单位净值在近五年全部净值中的百分位（0% 为历史最低，100% 为历史最高）。区间涨跌按交易日回溯（近 1 周 5 个、1 月 21 个、3 月 63 个、6 月 126 个、1 年 244 个），3 年与 5 年按自然日回溯；成立以来为首末净值对比。年化波动率用近五年日收益标准差乘 √244。
+      </div>
+      <div>数据源：天天基金（东方财富）pingzhongdata，由 GitHub Actions 定时抓取后写入 <code>data/funds.js</code>；页面为纯静态，不含任何交易或下单能力。</div>
+    </div>
+    <div class="disclaimer">净值分位只描述「当前净值处在自身历史的什么位置」，不等于便宜或高估，也不预测未来；星级由分位机械映射而来，是排序工具，不是买卖建议。定投回测为历史数据的事后模拟，不含申购费、赎回费与分红再投资处理差异。</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var D = window.FUND_DATA;
+  var mainEl = document.getElementById('content');
+  var emptyEl = document.getElementById('empty');
+  if (!D || !D.funds || !D.funds.length) {
+    emptyEl.hidden = false;
+    mainEl.hidden = true;
+    document.getElementById('meta').textContent = '无数据';
+    return;
+  }
+
+  /* ---------- 格式化 ---------- */
+  function fmt(v, digits) {
+    if (v === null || v === undefined || !isFinite(v)) return '—';
+    return Number(v).toFixed(digits == null ? 2 : digits);
+  }
+  function signed(v, digits) {
+    if (v === null || v === undefined || !isFinite(v)) return '—';
+    var s = (v > 0 ? '+' : '') + Number(v).toFixed(digits == null ? 2 : digits);
+    return s + '%';
+  }
+  function cls(v) { return v > 0 ? 'up' : (v < 0 ? 'down' : ''); }
+  function money(v) {
+    if (v === null || v === undefined || !isFinite(v)) return '—';
+    return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+  function shortDate(iso) { return iso ? iso.slice(0, 10) : '—'; }
+
+  var COLORS = {
+    ink: '#14201B', ink2: '#3B4A43', muted: '#6E7A72',
+    line: '#DAD8CE', grid: '#E7E5DC',
+    rise: '#B0342C', fall: '#2C6B50', gold: '#A9873F', paper: '#FFFFFF'
+  };
+  var baseText = {
+    fontFamily: '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif',
+    color: COLORS.ink2
+  };
+  var charts = {};
+
+  function chartOf(id) {
+    var el = document.getElementById(id);
+    if (!charts[id]) charts[id] = echarts.init(el, null, { renderer: 'canvas' });
+    return charts[id];
+  }
+
+  /* ---------- 净值分位条 ---------- */
+  function renderLede(f) {
+    document.getElementById('fundCode').textContent = f.code;
+    document.getElementById('fundName').textContent = f.name;
+    document.getElementById('fundSpan').textContent =
+      '净值序列 ' + shortDate(f.firstDate) + ' 起，共 ' + f.totalPoints + ' 个交易日；最新净值日 ' + shortDate(f.latest.date);
+
+    var starHtml = '';
+    for (var i = 1; i <= 5; i++) starHtml += '<span class="star' + (i <= (f.stars || 0) ? '' : ' off') + '"></span>';
+    document.getElementById('stars').innerHTML =
+      '<span class="star-row" aria-hidden="true">' + starHtml + '</span>' +
+      '<span class="star-num">估值星级 ' + (f.stars ? f.stars + ' / 5' : '—') + '</span>';
+
+    var p = f.percentile.y5;
+    var basis = f.percentile.basisWindow === '5y' ? '近五年净值分位' : '成立以来净值分位';
+    document.getElementById('pMark').style.left = (p == null ? 0 : Math.max(0, Math.min(100, p))) + '%';
+    document.getElementById('pText').innerHTML = basis + ' <b>' + fmt(p, 1) + '%</b>' +
+      '　近三年 ' + fmt(f.percentile.y3, 1) + '%　成立以来 ' + fmt(f.percentile.all, 1) + '%';
+  }
+
+  /* ---------- 指标条 ---------- */
+  function renderStrip(f) {
+    var chg = f.latest.chg != null ? f.latest.chg : f.ranges.d1;
+    var prevNav = (chg == null) ? null : f.latest.nav / (1 + chg / 100);
+    var cells = [
+      { k: '最新单位净值', v: fmt(f.latest.nav, 4), x: shortDate(f.latest.date) + ' 收盘', c: '' },
+      { k: '日涨跌幅', v: signed(chg), x: '前一交易日 ' + fmt(prevNav, 4), c: cls(chg) },
+      { k: '近一年涨跌', v: signed(f.ranges.y1), x: '近五年 ' + signed(f.ranges.y5), c: cls(f.ranges.y1) },
+      { k: '近五年最大回撤', v: signed(f.stats.maxDrawdown), x: (f.stats.maxDrawdownFrom || '—') + ' 至 ' + (f.stats.maxDrawdownTo || '—'), c: 'down' },
+      { k: '距近五年高点', v: signed(f.stats.from5yHigh), x: '高点 ' + fmt(f.high5y.nav, 4) + ' · ' + shortDate(f.high5y.date), c: cls(f.stats.from5yHigh) },
+      { k: '距近五年低点', v: signed(f.stats.from5yLow), x: '低点 ' + fmt(f.low5y.nav, 4) + ' · ' + shortDate(f.low5y.date), c: cls(f.stats.from5yLow) },
+      { k: '年化波动率', v: signed(f.stats.volatility).replace('+', ''), x: '近五年日收益测算', c: '' },
+      { k: '近一年上涨天数占比', v: fmt(f.stats.upDays, 1) + '%', x: '单日最好 ' + signed(f.stats.bestDay) + ' / 最差 ' + signed(f.stats.worstDay), c: '' }
+    ];
+    var html = '';
+    for (var i = 0; i < cells.length; i++) {
+      var d = cells[i];
+      html += '<div class="cell"><div class="cell-k">' + d.k + '</div>' +
+        '<div class="cell-v ' + d.c + '">' + d.v + '</div>' +
+        '<div class="cell-x">' + d.x + '</div></div>';
+    }
+    document.getElementById('strip').innerHTML = html;
+  }
+
+  /* ---------- 净值走势 ---------- */
+  function renderNavChart(f) {
+    var dates = f.series5y.map(function (p) { return p[0]; });
+    var navs = f.series5y.map(function (p) { return p[1]; });
+    var hi = f.high5y, lo = f.low5y;
+    var range = hi.nav - lo.nav;
+    var opt = {
+      animationDuration: 700,
+      grid: { left: 6, right: 34, top: 34, bottom: 32, containLabel: true },
+      tooltip: {
+        trigger: 'axis', confine: true,
+        backgroundColor: '#FFFFFF', borderColor: COLORS.line, borderWidth: 1,
+        textStyle: Object.assign({}, baseText, { fontSize: 12.5 }),
+        axisPointer: { type: 'line', lineStyle: { color: COLORS.muted, width: 1 } },
+        formatter: function (ps) {
+          var p = ps[0];
+          return '<div style="font-weight:600">' + p.axisValue + '</div>' +
+            '<div>单位净值 ' + Number(p.value).toFixed(4) + '</div>' +
+            '<div style="color:' + COLORS.muted + '">较近五年高点 ' + signed(((p.value / hi.nav - 1) * 100)) + '</div>';
         }
-       container.innerHTML = latest.map(item => { // <-- 关键修改：这里不再使用数组解构
-            // 从对象中获取文件名和日期
-	        const name = item['1']; 
-	        const date = item['2'];
-            // 如果需要显示标签，可以访问 item['3']，例如：
-            // const tags = item['3'] && Array.isArray(item['3']) ? item['3'].map(tag => `#${tag}`).join(' ') : '';
-	        return `<li><a href="blog.html?p=p/${encodeURIComponent(name)}"><span>${name}</span><i>${date}</i></a></li>`;
-	    }).join('');
-      })
-	  .catch(error => {
-	    console.error('Error fetching or parsing list.json:', error);
-	    const container = document.getElementById('latest');
-	    if (container) {
-            container.innerHTML = '<div>加载内容失败，请稍后再试。</div>';
+      },
+      xAxis: {
+        type: 'category', data: dates, boundaryGap: false,
+        axisLine: { lineStyle: { color: COLORS.line } },
+        axisTick: { show: false },
+        axisLabel: Object.assign({}, baseText, { fontSize: 11.5, color: COLORS.muted,
+          interval: function (idx) {
+            var step = Math.max(1, Math.ceil(dates.length / 6));
+            return idx === 0 || idx === dates.length - 1 || idx % step === 0;
+          },
+          formatter: function (v) { return v.slice(0, 7); } })
+      },
+      yAxis: {
+        type: 'value', scale: true,
+        min: Math.floor(lo.nav * 0.96 * 100) / 100,
+        max: Math.ceil(hi.nav * 1.04 * 100) / 100,
+        splitLine: { lineStyle: { color: COLORS.grid, type: 'solid', width: 1 } },
+        axisLabel: Object.assign({}, baseText, { fontSize: 11.5, color: COLORS.muted, formatter: function (v) { return v.toFixed(2); } })
+      },
+      series: [{
+        type: 'line', data: navs, showSymbol: false, smooth: 0.15,
+        lineStyle: { width: 1.7, color: COLORS.ink },
+        areaStyle: { color: 'rgba(20,32,27,0.05)' },
+        markLine: {
+          symbol: 'none', silent: true,
+          lineStyle: { color: COLORS.muted, type: 'dashed', width: 1, opacity: 0.75 },
+          label: { show: false },
+          data: [
+            { yAxis: hi.nav },
+            { yAxis: lo.nav }
+          ]
+        },
+        markPoint: {
+          symbol: 'circle', symbolSize: 6, itemStyle: { color: COLORS.rise },
+          label: { show: false },
+          data: [{ coord: [dates.length - 1, navs[navs.length - 1]] }]
         }
-	  });
+      }]
+    };
+    chartOf('chartNav').setOption(opt, true);
+    document.getElementById('navNote').textContent =
+      '区间高点 ' + hi.nav.toFixed(4) + '（' + hi.date + '）　低点 ' + lo.nav.toFixed(4) + '（' + lo.date + '）　振幅 ' +
+      fmt((range / lo.nav) * 100, 1) + '%；末点为最新净值';
+  }
+
+  /* ---------- 年度收益 ---------- */
+  function renderYearChart(f) {
+    var rows = f.yearly;
+    var opt = {
+      animationDuration: 600,
+      grid: { left: 6, right: 14, top: 22, bottom: 8, containLabel: true },
+      tooltip: {
+        trigger: 'axis', confine: true, axisPointer: { type: 'shadow' },
+        backgroundColor: '#FFFFFF', borderColor: COLORS.line, borderWidth: 1,
+        textStyle: Object.assign({}, baseText, { fontSize: 12.5 }),
+        formatter: function (ps) {
+          var p = ps[0], r = rows[p.dataIndex];
+          return '<div style="font-weight:600">' + r.year + (r.partial ? '（不完整年度）' : '') + '</div>' +
+            '<div>收益率 ' + signed(r.ret) + '</div>';
+        }
+      },
+      xAxis: {
+        type: 'category', data: rows.map(function (r) { return r.year.slice(2) + '年'; }),
+        axisLine: { lineStyle: { color: COLORS.line } }, axisTick: { show: false },
+        axisLabel: Object.assign({}, baseText, { fontSize: 11, color: COLORS.muted, interval: 1 })
+      },
+      yAxis: {
+        type: 'value', name: '%', nameTextStyle: { fontSize: 11, color: COLORS.muted, padding: [0, 0, 0, 6] },
+        axisLabel: Object.assign({}, baseText, { fontSize: 11, color: COLORS.muted }),
+        splitLine: { lineStyle: { color: COLORS.grid } }
+      },
+      series: [{
+        type: 'bar', barWidth: '52%',
+        data: rows.map(function (r) {
+          return {
+            value: r.ret,
+            itemStyle: { color: r.partial ? (r.ret >= 0 ? 'rgba(176,52,44,.45)' : 'rgba(44,107,80,.45)') : (r.ret >= 0 ? COLORS.rise : COLORS.fall) }
+          };
+        }),
+        label: {
+          show: document.getElementById('chartYear').clientWidth >= 440,
+          position: 'top', distance: 3,
+          fontSize: 10.5, color: COLORS.muted,
+          formatter: function (p) { return p.value >= 0 ? '+' + p.value.toFixed(0) : p.value.toFixed(0); }
+        },
+        markLine: { symbol: 'none', silent: true, lineStyle: { color: COLORS.ink, width: 1, opacity: .5 }, data: [{ yAxis: 0 }] }
+      }]
+    };
+    chartOf('chartYear').setOption(opt, true);
+  }
+
+  /* ---------- 区间涨跌 ---------- */
+  function renderRangeChart(f) {
+    var r = f.ranges;
+    var items = [
+      ['近1周', r.w1], ['近1月', r.m1], ['近3月', r.m3], ['近6月', r.m6],
+      ['近1年', r.y1], ['近3年', r.y3], ['近5年', r.y5], ['年初至今', r.ytd]
+    ];
+    document.getElementById('rangeNote').textContent =
+      '按交易日与自然日回溯计算；成立以来 ' + signed(r.all) + '（跨 11 个年度，未并入下图刻度）';
+    var xMin = Math.min.apply(null, items.map(function (i) { return i[1]; }).concat([0]));
+    var xMax = Math.max.apply(null, items.map(function (i) { return i[1]; }).concat([0]));
+    var axisMin = Math.floor((xMin - 2) / 10) * 10;
+    var axisMax = Math.ceil((xMax + 2) / 10) * 10;
+    var opt = {
+      animationDuration: 600,
+      grid: { left: 6, right: 52, top: 8, bottom: 8, containLabel: true },
+      tooltip: {
+        trigger: 'axis', confine: true, axisPointer: { type: 'shadow' },
+        backgroundColor: '#FFFFFF', borderColor: COLORS.line, borderWidth: 1,
+        textStyle: Object.assign({}, baseText, { fontSize: 12.5 }),
+        formatter: function (ps) { var p = ps[0]; return '<div style="font-weight:600">' + p.name + '</div><div>涨跌幅 ' + signed(p.value) + '</div>'; }
+      },
+      xAxis: {
+        type: 'value', min: axisMin, max: axisMax, splitNumber: 3,
+        axisLine: { show: false }, axisTick: { show: false },
+        splitLine: { lineStyle: { color: COLORS.grid } },
+        axisLabel: Object.assign({}, baseText, { fontSize: 11, color: COLORS.muted, formatter: function (v) { return v.toFixed(0) + '%'; } })
+      },
+      yAxis: {
+        type: 'category', inverse: true, data: items.map(function (i) { return i[0]; }),
+        axisLine: { lineStyle: { color: COLORS.line } }, axisTick: { show: false },
+        axisLabel: Object.assign({}, baseText, { fontSize: 12, color: COLORS.ink2 })
+      },
+      series: [{
+        type: 'bar', barWidth: '46%',
+        data: items.map(function (i) {
+          return { value: i[1], itemStyle: { color: i[1] == null ? COLORS.line : (i[1] >= 0 ? COLORS.rise : COLORS.fall) } };
+        }),
+        label: {
+          show: true, position: 'right', distance: 6, fontSize: 11, color: COLORS.ink2,
+          formatter: function (p) { return signed(p.value); }
+        },
+        markLine: { symbol: 'none', silent: true, lineStyle: { color: COLORS.ink, width: 1, opacity: .45 }, data: [{ xAxis: 0 }] }
+      }]
+    };
+    chartOf('chartRange').setOption(opt, true);
+  }
+
+  /* ---------- 定投 ---------- */
+  function renderDca(f) {
+    var d = f.dca || {};
+    var cards = [
+      { k: '一次投入', v: money(d.amount) + ' 元', x: '每周一', c: '' },
+      { k: '累计投入', v: money(d.invested) + ' 元', x: (d.weeks || 0) + ' 次 · ' + shortDate(d.startDate) + ' 起', c: '' },
+      { k: '当前市值', v: money(d.value) + ' 元', x: '累计收益 ' + (d.profit > 0 ? '+' : '') + money(d.profit) + ' 元', c: cls(d.profit) },
+      { k: '累计收益率', v: signed(d.profitRate, 1), x: '年化 IRR ' + signed(d.irr, 1), c: cls(d.profitRate) }
+    ];
+    var html = '';
+    for (var i = 0; i < cards.length; i++) {
+      html += '<div class="dca-cell"><div class="card-k">' + cards[i].k + '</div>' +
+        '<div class="card-v ' + cards[i].c + '">' + cards[i].v + '</div>' +
+        '<div class="card-k" style="margin-top:2px">' + cards[i].x + '</div></div>';
+    }
+    document.getElementById('dcaGrid').innerHTML = html;
+
+    var calc = '累计买入份额 ' + fmt(d.shares, 4) + ' 份，按最新净值 ' + fmt(f.latest.nav, 4) + ' 折算市值。';
+    if (d.profitRate != null && f.ranges.y5 != null) {
+      var gap = d.profitRate - f.ranges.y5;
+      calc += '同样金额若在起始日一次性买入，收益为 ' + signed(f.ranges.y5) + '；周投把择时摊平后，累计收益率比一次性买入' +
+        (gap >= 0 ? '高 ' : '低 ') + signed(Math.abs(gap), 1) + '。';
+    }
+    document.getElementById('dcaLine').innerHTML = calc;
+  }
+
+  /* ---------- 历史记录表 ---------- */
+  function renderTable(f) {
+    var rows = f.recent || [];
+    var html = '';
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      html += '<tr><td>' + r.date + '</td><td>' + fmt(r.nav, 4) + '</td>' +
+        '<td class="' + cls(r.chg) + '">' + signed(r.chg) + '</td></tr>';
+    }
+    document.getElementById('rows').innerHTML = html || '<tr><td colspan="3">暂无记录</td></tr>';
+  }
+
+  /* ---------- 渲染 ---------- */
+  function render(f) {
+    renderLede(f);
+    renderStrip(f);
+    renderNavChart(f);
+    renderYearChart(f);
+    renderRangeChart(f);
+    renderDca(f);
+    renderTable(f);
+  }
+
+  function tabs(list, activeCode) {
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+      var f = list[i];
+      html += '<button class="tab" role="tab" data-code="' + f.code + '" aria-selected="' + (f.code === activeCode) + '">' +
+        f.name + '<small>' + f.code + ' · ' + (f.stars || 0) + '星</small></button>';
+    }
+    var el = document.getElementById('tabs');
+    el.innerHTML = html;
+  }
+
+  var current = null;
+  function show(code) {
+    var f = D.funds.filter(function (x) { return x.code === code; })[0] || D.funds[0];
+    current = f.code;
+    tabs(D.funds, f.code);
+    render(f);
+    var stamp = new Date(D.generatedAt);
+    document.getElementById('meta').textContent =
+      '数据生成 ' + stamp.toLocaleString('zh-CN', { hour12: false }) + '\n来源 天天基金';
+  }
+
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var btn = e.target.closest('.tab');
+    if (!btn) return;
+    var code = btn.getAttribute('data-code');
+    if (location.hash !== '#/' + code) location.hash = '#/' + code;
+    else show(code);
+  });
+
+  window.addEventListener('hashchange', function () {
+    var code = (location.hash || '').replace('#/', '');
+    if (code) show(code);
+  });
+
+  var ro = new ResizeObserver(function () {
+    Object.keys(charts).forEach(function (k) { charts[k].resize(); });
+  });
+  ['chartNav', 'chartYear', 'chartRange'].forEach(function (id) { ro.observe(document.getElementById(id)); });
+
+  var initial = (location.hash || '').replace('#/', '') || D.funds[0].code;
+  show(initial);
+  document.getElementById('ruleText').textContent = '星级规则：' + (D.starRule || '近五年净值分位 ≤20% 五颗星，≤40% 四颗星，≤60% 三颗星，≤80% 两颗星，>80% 一颗星。');
+})();
 </script>
+</body>
 </html>
