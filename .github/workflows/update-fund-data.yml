@@ -1,0 +1,41 @@
+name: 更新基金数据
+
+on:
+  schedule:
+    # 北京时间每个工作日 20:40 抓取（UTC 12:40）；基金净值一般 20:00 前后更新完毕
+    - cron: '40 12 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fund-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 抓取并计算
+        run: node scripts/build-data.mjs
+
+      - name: 提交数据变更
+        run: |
+          git config user.name "fund-data-bot"
+          git config user.email "fund-data-bot@users.noreply.github.com"
+          git add data/funds.js data/funds.json
+          if git diff --cached --quiet; then
+            echo "数据无变化，跳过提交"
+          else
+            git commit -m "chore: 更新基金数据 $(TZ=Asia/Shanghai date +%F)"
+            git push
+          fi
